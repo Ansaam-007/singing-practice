@@ -578,25 +578,25 @@
     box.innerHTML = '';
   }
 
-  /* ── Fetch lyrics ── */
+  /* ── Fetch lyrics (parallel with timeout) ── */
+  function fetchWithTimeout(url, ms = 6000) {
+    const ctrl = new AbortController();
+    const id   = setTimeout(() => ctrl.abort(), ms);
+    return fetch(url, { signal: ctrl.signal }).finally(() => clearTimeout(id));
+  }
+
   async function fetchLyrics(artist, title) {
-    // Primary: lrclib.net
-    try {
-      const res = await fetch(`https://lrclib.net/api/get?artist_name=${encodeURIComponent(artist)}&track_name=${encodeURIComponent(title)}`);
-      if (res.ok) {
-        const d = await res.json();
-        if (d.plainLyrics) return d.plainLyrics.trim();
-      }
-    } catch(e) {}
-    // Fallback: lyrics.ovh
-    try {
-      const res = await fetch(`https://api.lyrics.ovh/v1/${encodeURIComponent(artist)}/${encodeURIComponent(title)}`);
-      if (res.ok) {
-        const d = await res.json();
-        if (d.lyrics) return d.lyrics.replace(/\r\n/g,'\n').trim();
-      }
-    } catch(e) {}
-    return null;
+    const [lrc, ovh] = await Promise.allSettled([
+      fetchWithTimeout(`https://lrclib.net/api/get?artist_name=${encodeURIComponent(artist)}&track_name=${encodeURIComponent(title)}`)
+        .then(r => r.ok ? r.json() : null)
+        .then(d => d?.plainLyrics?.trim() || null)
+        .catch(() => null),
+      fetchWithTimeout(`https://api.lyrics.ovh/v1/${encodeURIComponent(artist)}/${encodeURIComponent(title)}`)
+        .then(r => r.ok ? r.json() : null)
+        .then(d => d?.lyrics ? d.lyrics.replace(/\r\n/g, '\n').trim() : null)
+        .catch(() => null),
+    ]);
+    return (lrc.value) || (ovh.value) || null;
   }
 
   /* ── Needs transliteration? ── */
