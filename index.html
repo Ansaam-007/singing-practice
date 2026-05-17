@@ -163,7 +163,7 @@
     .action-btn:hover     { background: #2d1f4a; color: #c084fc; }
     .action-btn.del:hover  { color: #f87171; }
     .action-btn.playing   { color: #c084fc; background: #2d1f4a; }
-    .action-btn.yt-btn    { font-size: 0.65rem; font-weight: 800; letter-spacing: 0; }
+    .action-btn.yt-btn    { padding: 4px 7px; }
     .dm-media-btns { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
     .dm-media-btn {
       display: flex; align-items: center; gap: 6px;
@@ -814,7 +814,8 @@
       mediaEl.appendChild(pb);
     }
     const ytb = document.createElement('button');
-    ytb.className = 'dm-media-btn'; ytb.textContent = '🎬 YouTube';
+    ytb.className = 'dm-media-btn';
+    ytb.innerHTML = '<svg width="18" height="13" viewBox="0 0 20 14" fill="none"><rect width="20" height="14" rx="3" fill="#FF0000"/><path d="M8 4L14 7L8 10V4Z" fill="white"/></svg> YouTube';
     ytb.addEventListener('click', () => window.openYT(song.title, song.artist));
     mediaEl.appendChild(ytb);
 
@@ -964,7 +965,7 @@
           </div>
           <div class="song-actions">
             ${song.previewUrl ? `<button class="action-btn play-btn" data-play-key="${key}" title="Afspil 30 sek. preview">▶</button>` : ''}
-            <button class="action-btn yt-btn" title="Søg på YouTube">YT</button>
+            <button class="action-btn yt-btn" title="Søg på YouTube"><svg width="20" height="14" viewBox="0 0 20 14" fill="none"><rect width="20" height="14" rx="3" fill="#FF0000"/><path d="M8 4L14 7L8 10V4Z" fill="white"/></svg></button>
             <button class="action-btn edit-btn" title="Rediger">✏️</button>
             <button class="action-btn del" title="Slet">🗑️</button>
           </div>
