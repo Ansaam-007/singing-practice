@@ -578,11 +578,26 @@
       </div>
     </div>
 
+    <!-- no token -->
+    <div id="rec-s-notoken" style="display:none">
+      <div class="rec-icon">🔑</div>
+      <div class="rec-label">Free token needed</div>
+      <div class="rec-sublabel" style="margin-bottom:16px">AudD identifies songs for free — you just need a quick sign-up</div>
+      <div class="rec-btns">
+        <button class="rec-btn-add" onclick="window.open('https://dashboard.audd.io/','_blank')">Get free token at audd.io</button>
+        <button class="rec-btn-add" style="background:#2d1f4a" onclick="setAuddToken()">I have a token — enter it</button>
+        <button class="rec-btn-sec" onclick="cancelRecognition()">Close</button>
+      </div>
+    </div>
+
     <!-- error -->
     <div id="rec-s-error" style="display:none">
       <div class="rec-icon">⚠️</div>
       <div class="rec-label" id="rec-error-msg"></div>
-      <button class="rec-btn-sec" onclick="cancelRecognition()">Close</button>
+      <div class="rec-btns" style="margin-top:16px">
+        <button class="rec-btn-add" style="background:#2d1f4a" onclick="setAuddToken()">⚙️ Enter AudD token</button>
+        <button class="rec-btn-sec" onclick="cancelRecognition()">Close</button>
+      </div>
     </div>
 
   </div>
@@ -1107,14 +1122,32 @@
   let recResult = null;
 
   function recShow(state) {
-    ['listening','processing','result','notfound','error'].forEach(s => {
+    ['listening','processing','result','notfound','error','notoken'].forEach(s => {
       document.getElementById(`rec-s-${s}`).style.display = s === state ? 'block' : 'none';
     });
   }
 
+  window.setAuddToken = () => {
+    const cur = localStorage.getItem('auddToken') || '';
+    const t = prompt('Paste your AudD API token here:\n(Get one free at dashboard.audd.io → sign up → copy your token)', cur);
+    if (t === null) return;
+    if (t.trim()) {
+      localStorage.setItem('auddToken', t.trim());
+      startRecognition();
+    } else {
+      localStorage.removeItem('auddToken');
+    }
+  };
+
   window.startRecognition = async () => {
     recResult = null;
     document.getElementById('rec-overlay').classList.add('open');
+
+    if (!localStorage.getItem('auddToken')) {
+      recShow('notoken');
+      return;
+    }
+
     recShow('listening');
 
     // Stop any previous stream
@@ -1158,8 +1191,9 @@
         const form = new FormData();
         form.append('audio', blob, 'recording.webm');
         form.append('return', 'apple_music');
+        form.append('api_token', localStorage.getItem('auddToken') || '');
 
-        const res  = await fetchWithTimeout('https://api.audd.io/', 10000, { method: 'POST', body: form });
+        const res  = await fetchWithTimeout('https://api.audd.io/', 12000, { method: 'POST', body: form });
         const data = await res.json();
 
         if (data.status === 'success' && data.result) {
@@ -1167,12 +1201,16 @@
           document.getElementById('rec-title').textContent  = recResult.title;
           document.getElementById('rec-artist').textContent = recResult.artist;
           recShow('result');
+        } else if (data.status === 'error') {
+          const msg = data.error?.error_message || 'Unknown error';
+          document.getElementById('rec-error-msg').textContent = msg;
+          recShow('error');
         } else {
           recShow('notfound');
         }
-      } catch {
+      } catch(err) {
+        document.getElementById('rec-error-msg').textContent = 'Could not reach recognition service. Check your connection.';
         recShow('error');
-        document.getElementById('rec-error-msg').textContent = 'Network error — check your connection and try again.';
       }
     };
   };
