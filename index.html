@@ -623,15 +623,43 @@
     return /[؀-ۿݐ-ݿ一-鿿가-힯぀-ヿЀ-ӿऀ-ॿ฀-๿Ͱ-Ͽ]/.test(text);
   }
 
+  /* ── Auto-find YouTube video ID via Invidious public API ── */
+  async function findYoutubeId(title, artist) {
+    const q = encodeURIComponent(`${title} ${artist} official`);
+    const instances = [
+      'https://inv.nadeko.net',
+      'https://invidious.nerdvpn.de',
+      'https://yt.drgnz.club',
+      'https://invidious.privacyredirect.com',
+    ];
+    try {
+      return await Promise.any(
+        instances.map(base =>
+          fetchWithTimeout(`${base}/api/v1/search?q=${q}&type=video&fields=videoId&page=1`, 6000)
+            .then(r => { if (!r.ok) throw new Error(); return r.json(); })
+            .then(data => {
+              if (data?.[0]?.videoId) return data[0].videoId;
+              throw new Error();
+            })
+        )
+      );
+    } catch { return null; }
+  }
+
   /* ── Select song from dropdown ── */
   async function selectSong(trackName, artistName, previewUrl) {
     hideSuggestions();
     window.pendingPreviewUrl = previewUrl || '';
-    document.getElementById('f-title').value  = trackName;
-    document.getElementById('f-artist').value = artistName;
+    document.getElementById('f-title').value   = trackName;
+    document.getElementById('f-artist').value  = artistName;
+    document.getElementById('f-youtube').value = '';
 
-    setStatus('📝 Henter sangtekst...');
-    const lyrics = await fetchLyrics(artistName, trackName);
+    setStatus('📝 Henter sangtekst og video...');
+
+    const [lyrics, youtubeId] = await Promise.all([
+      fetchLyrics(artistName, trackName),
+      findYoutubeId(trackName, artistName),
+    ]);
 
     if (lyrics) {
       document.getElementById('f-lyrics').value = lyrics;
@@ -641,11 +669,16 @@
         setStatus('✅ Færdig!');
       } else {
         document.getElementById('f-translit').value = '';
-        setStatus('✅ Tekst hentet!');
+        setStatus('✅ Tekst og video hentet!');
       }
     } else {
-      setStatus('❌ Ingen tekst fundet');
+      setStatus(youtubeId ? '✅ Video fundet' : '❌ Ingen tekst fundet');
     }
+
+    if (youtubeId) {
+      document.getElementById('f-youtube').value = `https://youtu.be/${youtubeId}`;
+    }
+
     setTimeout(() => setStatus(''), 3000);
   }
 
