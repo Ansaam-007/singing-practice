@@ -20,7 +20,7 @@
     .header { text-align: center; margin-bottom: 32px; }
     .header .big-emoji { font-size: 3.5rem; }
     .header h1 { font-size: 2rem; color: #c084fc; margin: 8px 0 6px; }
-    .header p { color: #7c6a9e; font-size: 0.95rem; }
+    .header p  { color: #7c6a9e; font-size: 0.95rem; }
 
     .stats { display: flex; gap: 10px; margin-bottom: 24px; }
     .stat {
@@ -38,19 +38,16 @@
       flex-wrap: wrap; align-items: center;
     }
     .filter-btn {
-      background: #1a1030; border: 1px solid #2d1f4a;
-      border-radius: 20px; padding: 7px 16px;
-      font-size: 0.82rem; color: #7c6a9e; cursor: pointer;
-      transition: all 0.2s; font-family: inherit; white-space: nowrap;
+      background: #1a1030; border: 1px solid #2d1f4a; border-radius: 20px;
+      padding: 7px 16px; font-size: 0.82rem; color: #7c6a9e;
+      cursor: pointer; transition: all 0.2s; font-family: inherit; white-space: nowrap;
     }
     .filter-btn:hover  { border-color: #7c3aed; color: #c084fc; }
     .filter-btn.active { background: #7c3aed; border-color: #7c3aed; color: #fff; }
     .search-input {
-      flex: 1; min-width: 140px;
-      background: #1a1030; border: 1px solid #2d1f4a;
-      border-radius: 20px; padding: 7px 16px;
-      font-size: 0.85rem; color: #e2e8f0; outline: none;
-      font-family: inherit; transition: border-color 0.2s;
+      flex: 1; min-width: 140px; background: #1a1030; border: 1px solid #2d1f4a;
+      border-radius: 20px; padding: 7px 16px; font-size: 0.85rem;
+      color: #e2e8f0; outline: none; font-family: inherit; transition: border-color 0.2s;
     }
     .search-input:focus { border-color: #7c3aed; }
     .search-input::placeholder { color: #4a3a6a; }
@@ -62,7 +59,6 @@
       border-radius: 18px; overflow: hidden; transition: border-color 0.2s;
     }
     .song-card:hover { border-color: #5b21b6; }
-
     .song-top {
       display: flex; align-items: flex-start;
       gap: 14px; padding: 16px 18px 12px;
@@ -103,48 +99,34 @@
     .section-text { color: #c4b5d4; line-height: 1.45; }
 
     /* Lyrics toggle */
-    .lyrics-toggle {
-      display: flex; align-items: center; gap: 8px;
-      padding: 8px 18px 12px;
-    }
+    .lyrics-toggle { padding: 6px 18px 12px; }
     .toggle-btn {
       background: none; border: 1px solid #2d1f4a; border-radius: 20px;
       color: #7c6a9e; font-size: 0.78rem; cursor: pointer;
       padding: 4px 12px; font-family: inherit; transition: all 0.2s;
     }
     .toggle-btn:hover { border-color: #7c3aed; color: #c084fc; }
-
-    /* Lyrics panel */
-    .lyrics-panel {
-      display: none;
-      padding: 0 18px 18px;
-    }
+    .lyrics-panel { display: none; padding: 0 18px 18px; }
     .lyrics-panel.open { display: block; }
-
-    .lyrics-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 12px;
-    }
+    .lyrics-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
     .lyrics-grid.single { grid-template-columns: 1fr; }
-
     .lyrics-col label {
       display: block; font-size: 0.72rem; font-weight: 700;
-      text-transform: uppercase; letter-spacing: 0.06em;
-      color: #5b4a7a; margin-bottom: 6px;
+      text-transform: uppercase; letter-spacing: 0.06em; color: #5b4a7a; margin-bottom: 6px;
     }
     .lyrics-col pre {
-      font-family: 'Segoe UI', sans-serif;
-      font-size: 0.9rem; line-height: 1.7;
+      font-family: 'Segoe UI', sans-serif; font-size: 0.88rem; line-height: 1.7;
       white-space: pre-wrap; word-break: break-word;
       background: #0f0a1a; border: 1px solid #2d1f4a;
       border-radius: 10px; padding: 12px 14px; color: #c4b5d4;
     }
-    .lyrics-col.translit pre { color: #a5b4fc; direction: ltr; }
+    .lyrics-col.translit pre { color: #a5b4fc; }
+    @media (max-width: 520px) { .lyrics-grid { grid-template-columns: 1fr; } }
 
-    @media (max-width: 520px) {
-      .lyrics-grid { grid-template-columns: 1fr; }
-    }
+    /* Empty state */
+    .empty-state { text-align: center; padding: 52px 20px; color: #4a3a6a; }
+    .empty-state .e-icon { font-size: 3.5rem; margin-bottom: 14px; }
+    .empty-state p { font-size: 0.95rem; line-height: 1.6; }
 
     /* ── Modal ── */
     .modal-overlay {
@@ -165,50 +147,69 @@
     .form-row { display: flex; gap: 12px; }
     .form-row .form-group { flex: 1; }
     .form-group { margin-bottom: 14px; }
-    .form-group label {
-      display: block; font-size: 0.8rem; color: #7c6a9e;
-      margin-bottom: 5px; font-weight: 600;
-      text-transform: uppercase; letter-spacing: 0.04em;
+    .form-group > label {
+      display: flex; align-items: center; gap: 8px;
+      font-size: 0.8rem; color: #7c6a9e; margin-bottom: 5px;
+      font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em;
     }
+    .fetch-status { font-weight: 400; font-size: 0.78rem; text-transform: none; letter-spacing: 0; }
     .form-group input,
     .form-group select,
     .form-group textarea {
       width: 100%; background: #0f0a1a; border: 1px solid #2d1f4a;
-      border-radius: 10px; padding: 10px 13px;
-      font-size: 0.93rem; color: #e2e8f0; outline: none;
-      font-family: inherit; transition: border-color 0.2s;
+      border-radius: 10px; padding: 10px 13px; font-size: 0.93rem;
+      color: #e2e8f0; outline: none; font-family: inherit; transition: border-color 0.2s;
     }
     .form-group input:focus,
     .form-group select:focus,
     .form-group textarea:focus { border-color: #7c3aed; }
     .form-group select option { background: #1a1030; }
-    .form-group textarea { resize: vertical; min-height: 100px; line-height: 1.6; }
+    .form-group textarea { resize: vertical; min-height: 110px; line-height: 1.6; }
+
+    /* Suggestions dropdown */
+    .input-wrap { position: relative; }
+    .suggestions-box {
+      display: none; position: absolute; top: calc(100% + 4px); left: 0; right: 0;
+      background: #1e1535; border: 1px solid #3d2b60; border-radius: 14px;
+      z-index: 400; overflow: hidden; box-shadow: 0 12px 32px rgba(0,0,0,0.5);
+    }
+    .suggestions-box.open { display: block; }
+    .sug-item {
+      display: flex; align-items: center; gap: 10px;
+      padding: 10px 14px; cursor: pointer; transition: background 0.15s;
+      border-bottom: 1px solid #2d1f4a;
+    }
+    .sug-item:last-child { border-bottom: none; }
+    .sug-item:hover { background: #2d1f4a; }
+    .sug-thumb { width: 38px; height: 38px; border-radius: 8px; object-fit: cover; flex-shrink: 0; background: #2d1f4a; }
+    .sug-info { flex: 1; min-width: 0; }
+    .sug-title  { font-size: 0.88rem; font-weight: 600; color: #e2e8f0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .sug-artist { font-size: 0.76rem; color: #7c6a9e; margin-top: 1px; }
+    .sug-no-results { padding: 12px 14px; font-size: 0.85rem; color: #5b4a7a; text-align: center; }
 
     /* Transliteration row */
     .translit-label-row {
-      display: flex; align-items: center; justify-content: space-between;
-      margin-bottom: 5px;
+      display: flex; align-items: center; justify-content: space-between; margin-bottom: 5px;
     }
-    .translit-label-row label { margin-bottom: 0; }
+    .translit-label-row > label { margin-bottom: 0; }
     .auto-btn {
-      background: #2d1f4a; border: none; border-radius: 8px;
-      padding: 5px 12px; color: #c084fc; font-size: 0.78rem;
-      font-weight: 700; cursor: pointer; font-family: inherit;
-      transition: background 0.15s; display: flex; align-items: center; gap: 5px;
+      background: #2d1f4a; border: none; border-radius: 8px; padding: 5px 12px;
+      color: #c084fc; font-size: 0.78rem; font-weight: 700; cursor: pointer;
+      font-family: inherit; transition: background 0.15s; display: flex; align-items: center; gap: 5px;
     }
     .auto-btn:hover    { background: #3d2b60; }
     .auto-btn:disabled { opacity: 0.5; cursor: not-allowed; }
-    .auto-btn .spinner {
+    .spinner {
       width: 12px; height: 12px; border: 2px solid #7c3aed;
       border-top-color: transparent; border-radius: 50%;
       animation: spin 0.7s linear infinite; display: none;
     }
-    .auto-btn.loading .spinner { display: block; }
-    .auto-btn.loading .btn-label { display: none; }
+    .auto-btn.loading .spinner  { display: block; }
+    .auto-btn.loading .btn-lbl  { display: none; }
     @keyframes spin { to { transform: rotate(360deg); } }
 
-    /* Section tips */
-    .tips-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+    /* Tips builder */
+    .tips-header { display: flex; align-items: center; margin-bottom: 10px; }
     .tips-header label { font-size: 0.8rem; color: #7c6a9e; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; }
     .tips-list { display: flex; flex-direction: column; gap: 6px; margin-bottom: 10px; }
     .tip-row {
@@ -216,11 +217,11 @@
       background: #0f0a1a; border: 1px solid #2d1f4a;
       border-radius: 10px; padding: 8px 10px; font-size: 0.83rem;
     }
-    .tip-row .tip-section-lbl { font-weight: 700; white-space: nowrap; flex-shrink: 0; }
-    .tip-row .tip-text { flex: 1; color: #c4b5d4; }
-    .tip-del-btn { background: none; border: none; color: #4a3a6a; cursor: pointer; font-size: 0.85rem; padding: 0 4px; transition: color 0.15s; }
-    .tip-del-btn:hover { color: #f87171; }
-    .add-tip-row { display: flex; gap: 8px; align-items: flex-start; }
+    .tip-row .tip-slbl { font-weight: 700; white-space: nowrap; flex-shrink: 0; }
+    .tip-row .tip-txt  { flex: 1; color: #c4b5d4; }
+    .tip-del { background: none; border: none; color: #4a3a6a; cursor: pointer; font-size: 0.85rem; padding: 0 4px; transition: color 0.15s; }
+    .tip-del:hover { color: #f87171; }
+    .add-tip-row { display: flex; gap: 8px; }
     .add-tip-row select { width: 130px; flex-shrink: 0; padding: 8px 10px; font-size: 0.83rem; }
     .add-tip-row input  { flex: 1; padding: 8px 10px; font-size: 0.83rem; }
     .add-tip-btn {
@@ -232,33 +233,28 @@
 
     .modal-btns { display: flex; gap: 10px; margin-top: 22px; }
     .btn-save {
-      flex: 1; background: #7c3aed; color: #fff; border: none;
-      border-radius: 10px; padding: 13px; font-size: 0.95rem;
-      font-weight: 700; cursor: pointer; font-family: inherit; transition: background 0.2s;
+      flex: 1; background: #7c3aed; color: #fff; border: none; border-radius: 10px;
+      padding: 13px; font-size: 0.95rem; font-weight: 700; cursor: pointer;
+      font-family: inherit; transition: background 0.2s;
     }
     .btn-save:hover { background: #6d28d9; }
     .btn-cancel {
-      background: #2d1f4a; color: #7c6a9e; border: none;
-      border-radius: 10px; padding: 13px 20px; font-size: 0.95rem;
-      cursor: pointer; font-family: inherit; transition: background 0.2s;
+      background: #2d1f4a; color: #7c6a9e; border: none; border-radius: 10px;
+      padding: 13px 20px; font-size: 0.95rem; cursor: pointer;
+      font-family: inherit; transition: background 0.2s;
     }
     .btn-cancel:hover { background: #3d2b60; }
 
     /* FAB */
     .fab {
-      position: fixed; bottom: 28px; right: 28px;
-      width: 60px; height: 60px; background: #7c3aed; border: none;
-      border-radius: 50%; font-size: 1.8rem; color: #fff; cursor: pointer;
-      box-shadow: 0 6px 24px rgba(124,58,237,0.55);
+      position: fixed; bottom: 28px; right: 28px; width: 60px; height: 60px;
+      background: #7c3aed; border: none; border-radius: 50%; font-size: 1.8rem;
+      color: #fff; cursor: pointer; box-shadow: 0 6px 24px rgba(124,58,237,0.55);
       display: flex; align-items: center; justify-content: center;
       z-index: 100; transition: transform 0.2s, background 0.2s;
     }
     .fab:hover  { background: #6d28d9; transform: scale(1.08); }
     .fab:active { transform: scale(0.94); }
-
-    .empty-state { text-align: center; padding: 52px 20px; color: #4a3a6a; }
-    .empty-state .e-icon { font-size: 3.5rem; margin-bottom: 14px; }
-    .empty-state p { font-size: 0.95rem; line-height: 1.6; }
 
     @media (max-width: 480px) {
       body { padding: 18px 12px 90px; }
@@ -308,18 +304,23 @@
   <div class="modal">
     <h2 id="modal-title">Tilføj sang</h2>
 
-    <div class="form-row">
-      <div class="form-group">
-        <label>Sangtitel *</label>
-        <input type="text" id="f-title" placeholder="f.eks. Someone Like You" />
-      </div>
-      <div class="form-group">
-        <label>Kunstner *</label>
-        <input type="text" id="f-artist" placeholder="f.eks. Adele" />
+    <!-- Song search with autocomplete -->
+    <div class="form-group">
+      <label>
+        Sangtitel *
+        <span class="fetch-status" id="fetch-status"></span>
+      </label>
+      <div class="input-wrap">
+        <input type="text" id="f-title" placeholder="Skriv sangtitel — tekst hentes automatisk..." autocomplete="off" />
+        <div class="suggestions-box" id="suggestions"></div>
       </div>
     </div>
 
     <div class="form-row">
+      <div class="form-group">
+        <label>Kunstner</label>
+        <input type="text" id="f-artist" placeholder="f.eks. Adele" />
+      </div>
       <div class="form-group">
         <label>Status</label>
         <select id="f-status">
@@ -328,28 +329,29 @@
           <option value="mastered">⭐ Mestret</option>
         </select>
       </div>
-      <div class="form-group">
-        <label>Toneart (valgfrit)</label>
-        <input type="text" id="f-key" placeholder="f.eks. A♭ dur" />
-      </div>
+    </div>
+
+    <div class="form-group">
+      <label>Toneart (valgfrit)</label>
+      <input type="text" id="f-key" placeholder="f.eks. A♭ dur" />
     </div>
 
     <!-- Lyrics -->
     <div class="form-group">
-      <label>Sangtekst (valgfrit)</label>
-      <textarea id="f-lyrics" placeholder="Indsæt sangteksten her — arabisk, koreansk, japansk eller andet..."></textarea>
+      <label>Sangtekst</label>
+      <textarea id="f-lyrics" placeholder="Hentes automatisk, eller indsæt manuelt..."></textarea>
     </div>
 
     <!-- Transliteration -->
     <div class="form-group">
       <div class="translit-label-row">
-        <label>Translitteration</label>
+        <label style="margin-bottom:0;font-size:0.8rem;color:#7c6a9e;font-weight:600;text-transform:uppercase;letter-spacing:0.04em;">Translitteration</label>
         <button class="auto-btn" id="auto-btn" onclick="runAutoTranslit()">
           <div class="spinner"></div>
-          <span class="btn-label">✨ Auto-translitterer</span>
+          <span class="btn-lbl">✨ Auto</span>
         </button>
       </div>
-      <textarea id="f-translit" placeholder="Den latinske udtale vises her — eller skriv selv..."></textarea>
+      <textarea id="f-translit" placeholder="Hentes automatisk for ikke-latinske tekster..."></textarea>
     </div>
 
     <!-- Section tips -->
@@ -387,7 +389,6 @@
 
   const STATUS_LABEL = { want: '🎵 Vil lære', learning: '🎙️ Øver', mastered: '⭐ Mestret' };
   const STATUS_ICON  = { want: '🎵', learning: '🎙️', mastered: '⭐' };
-
   const SECTION_LABEL = {
     verse: 'Vers', chorus: 'Omkvæd', bridge: 'Bro',
     high: 'Høj node', breath: 'Åndedræt', key: 'Toneart', general: 'Generelt'
@@ -401,12 +402,209 @@
     return (s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
   }
 
+  /* ── Debounce helper ── */
+  function debounce(fn, ms) {
+    let t;
+    return (...a) => { clearTimeout(t); t = setTimeout(() => fn(...a), ms); };
+  }
+
+  /* ── Status label ── */
+  function setStatus(msg) {
+    document.getElementById('fetch-status').textContent = msg;
+  }
+
+  /* ── iTunes autocomplete ── */
+  const debouncedSearch = debounce(async (query) => {
+    if (query.length < 2) { hideSuggestions(); return; }
+    try {
+      const res  = await fetch(`https://itunes.apple.com/search?term=${encodeURIComponent(query)}&entity=musicTrack&limit=6&media=music`);
+      const data = await res.json();
+      showSuggestions(data.results || []);
+    } catch(e) { hideSuggestions(); }
+  }, 500);
+
+  function showSuggestions(results) {
+    const box = document.getElementById('suggestions');
+    if (!results.length) {
+      box.innerHTML = '<div class="sug-no-results">Ingen resultater</div>';
+      box.classList.add('open');
+      return;
+    }
+    box.innerHTML = results.map((r, i) => `
+      <div class="sug-item" data-i="${i}">
+        <img class="sug-thumb" src="${r.artworkUrl60 || ''}" alt="" onerror="this.style.visibility='hidden'" />
+        <div class="sug-info">
+          <div class="sug-title">${esc(r.trackName)}</div>
+          <div class="sug-artist">${esc(r.artistName)}</div>
+        </div>
+      </div>`).join('');
+    box.classList.add('open');
+    box.querySelectorAll('.sug-item').forEach((el, i) => {
+      el.addEventListener('mousedown', e => {
+        e.preventDefault();
+        selectSong(results[i].trackName, results[i].artistName);
+      });
+    });
+  }
+
+  function hideSuggestions() {
+    const box = document.getElementById('suggestions');
+    box.classList.remove('open');
+    box.innerHTML = '';
+  }
+
+  /* ── Fetch lyrics ── */
+  async function fetchLyrics(artist, title) {
+    // Primary: lrclib.net
+    try {
+      const res = await fetch(`https://lrclib.net/api/get?artist_name=${encodeURIComponent(artist)}&track_name=${encodeURIComponent(title)}`);
+      if (res.ok) {
+        const d = await res.json();
+        if (d.plainLyrics) return d.plainLyrics.trim();
+      }
+    } catch(e) {}
+    // Fallback: lyrics.ovh
+    try {
+      const res = await fetch(`https://api.lyrics.ovh/v1/${encodeURIComponent(artist)}/${encodeURIComponent(title)}`);
+      if (res.ok) {
+        const d = await res.json();
+        if (d.lyrics) return d.lyrics.replace(/\r\n/g,'\n').trim();
+      }
+    } catch(e) {}
+    return null;
+  }
+
+  /* ── Needs transliteration? ── */
+  function needsTranslit(text) {
+    return /[؀-ۿݐ-ݿ一-鿿가-힯぀-ヿЀ-ӿऀ-ॿ฀-๿Ͱ-Ͽ]/.test(text);
+  }
+
+  /* ── Select song from dropdown ── */
+  async function selectSong(trackName, artistName) {
+    hideSuggestions();
+    document.getElementById('f-title').value  = trackName;
+    document.getElementById('f-artist').value = artistName;
+
+    setStatus('📝 Henter sangtekst...');
+    const lyrics = await fetchLyrics(artistName, trackName);
+
+    if (lyrics) {
+      document.getElementById('f-lyrics').value = lyrics;
+      if (needsTranslit(lyrics)) {
+        setStatus('✨ Translittererer...');
+        await runAutoTranslit();
+        setStatus('✅ Færdig!');
+      } else {
+        document.getElementById('f-translit').value = '';
+        setStatus('✅ Tekst hentet!');
+      }
+    } else {
+      setStatus('❌ Ingen tekst fundet');
+    }
+    setTimeout(() => setStatus(''), 3000);
+  }
+
+  /* ── Auto transliterate ── */
+  window.runAutoTranslit = async () => {
+    const lyrics = document.getElementById('f-lyrics').value.trim();
+    if (!lyrics) { document.getElementById('f-lyrics').focus(); return; }
+    const btn = document.getElementById('auto-btn');
+    btn.classList.add('loading'); btn.disabled = true;
+    try {
+      const lines   = lyrics.split('\n');
+      const results = [];
+      const BATCH   = 6;
+      for (let i = 0; i < lines.length; i += BATCH) {
+        const batch = lines.slice(i, i + BATCH);
+        const done  = await Promise.all(batch.map(async line => {
+          if (!line.trim()) return '';
+          const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=en&dt=t&dt=rm&q=${encodeURIComponent(line)}`;
+          const res  = await fetch(url);
+          const data = await res.json();
+          return (data[0] || []).map(s => s[3] || s[1] || '').join('').trim() || line;
+        }));
+        results.push(...done);
+      }
+      document.getElementById('f-translit').value = results.join('\n');
+    } catch(e) {
+      alert('Kunne ikke auto-translittere. Tjek din forbindelse.');
+    } finally {
+      btn.classList.remove('loading'); btn.disabled = false;
+    }
+  };
+
+  /* ── Title input: trigger search ── */
+  document.getElementById('f-title').addEventListener('input', e => {
+    debouncedSearch(e.target.value.trim());
+  });
+  document.getElementById('f-title').addEventListener('blur', () => {
+    setTimeout(hideSuggestions, 150);
+  });
+
+  /* ── Modal open/close ── */
   window.setFilter = (f) => {
     currentFilter = f;
     document.querySelectorAll('.filter-btn').forEach(b => b.classList.toggle('active', b.dataset.f === f));
     renderAll();
   };
 
+  window.openModal = (key) => {
+    editingKey = key || null;
+    const song = key && window.songsCache[key];
+    document.getElementById('modal-title').textContent = key ? 'Rediger sang' : 'Tilføj sang';
+    document.getElementById('f-title').value    = song ? song.title   || '' : '';
+    document.getElementById('f-artist').value   = song ? song.artist  || '' : '';
+    document.getElementById('f-status').value   = song ? song.status  || 'want' : 'want';
+    document.getElementById('f-key').value      = song ? song.key     || '' : '';
+    document.getElementById('f-lyrics').value   = song ? song.lyrics  || '' : '';
+    document.getElementById('f-translit').value = song ? song.translit|| '' : '';
+    setStatus('');
+    hideSuggestions();
+    pendingTips = song && Array.isArray(song.tips) ? [...song.tips] : [];
+    renderTipsList();
+    document.getElementById('modal').classList.add('open');
+    setTimeout(() => document.getElementById('f-title').focus(), 60);
+  };
+
+  window.closeModal = () => {
+    document.getElementById('modal').classList.remove('open');
+    hideSuggestions();
+    editingKey = null; pendingTips = [];
+    setStatus('');
+  };
+
+  /* ── Tips ── */
+  window.addTip = () => {
+    const text = document.getElementById('tip-text').value.trim();
+    if (!text) { document.getElementById('tip-text').focus(); return; }
+    pendingTips.push({ section: document.getElementById('tip-section').value, text });
+    document.getElementById('tip-text').value = '';
+    document.getElementById('tip-text').focus();
+    renderTipsList();
+  };
+
+  function renderTipsList() {
+    document.getElementById('tips-list').innerHTML = pendingTips.map((t, i) => `
+      <div class="tip-row">
+        <span class="tip-slbl ${SECTION_CLASS[t.section]||'sl-general'}" style="padding:2px 8px;border-radius:6px;font-size:0.75rem;">
+          ${esc(SECTION_LABEL[t.section]||t.section)}
+        </span>
+        <span class="tip-txt">${esc(t.text)}</span>
+        <button class="tip-del" onclick="removeTip(${i})">✕</button>
+      </div>`).join('');
+  }
+
+  window.removeTip = (i) => { pendingTips.splice(i, 1); renderTipsList(); };
+
+  document.getElementById('modal').addEventListener('click', e => {
+    if (e.target === document.getElementById('modal')) window.closeModal();
+  });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') window.closeModal(); });
+  document.getElementById('tip-text').addEventListener('keydown', e => {
+    if (e.key === 'Enter') window.addTip();
+  });
+
+  /* ── Render song cards ── */
   window.renderAll = () => {
     const q = (document.getElementById('search').value || '').toLowerCase();
     const entries = Object.entries(window.songsCache || {});
@@ -421,7 +619,6 @@
     document.getElementById('cnt-mastered').textContent = entries.filter(([,v]) => v.status === 'mastered').length;
 
     const list = document.getElementById('songs-list');
-
     if (filtered.length === 0) {
       list.innerHTML = `<div class="empty-state"><div class="e-icon">🎵</div><p>${
         currentFilter === 'all' && !q
@@ -442,33 +639,25 @@
         <div class="song-sections">
           ${tips.map(t => `
             <div class="section-tip">
-              <span class="section-label ${SECTION_CLASS[t.section] || 'sl-general'}">${esc(SECTION_LABEL[t.section] || t.section)}</span>
+              <span class="section-label ${SECTION_CLASS[t.section]||'sl-general'}">${esc(SECTION_LABEL[t.section]||t.section)}</span>
               <span class="section-text">${esc(t.text)}</span>
             </div>`).join('')}
         </div>` : '';
 
-      const toggleHtml = hasLyrics ? `
+      const lyricsHtml = hasLyrics ? `
         <div class="lyrics-toggle">
-          <button class="toggle-btn" data-open="0">📖 Vis tekst ▾</button>
+          <button class="toggle-btn">📖 Vis tekst ▾</button>
         </div>
         <div class="lyrics-panel">
           <div class="lyrics-grid${song.lyrics && song.translit ? '' : ' single'}">
-            ${song.lyrics ? `
-              <div class="lyrics-col">
-                <label>Original</label>
-                <pre>${esc(song.lyrics)}</pre>
-              </div>` : ''}
-            ${song.translit ? `
-              <div class="lyrics-col translit">
-                <label>Translitteration</label>
-                <pre>${esc(song.translit)}</pre>
-              </div>` : ''}
+            ${song.lyrics   ? `<div class="lyrics-col"><label>Original</label><pre>${esc(song.lyrics)}</pre></div>`  : ''}
+            ${song.translit ? `<div class="lyrics-col translit"><label>Translitteration</label><pre>${esc(song.translit)}</pre></div>` : ''}
           </div>
         </div>` : '';
 
       div.innerHTML = `
         <div class="song-top">
-          <div class="song-icon">${STATUS_ICON[song.status] || '🎵'}</div>
+          <div class="song-icon">${STATUS_ICON[song.status]||'🎵'}</div>
           <div class="song-main">
             <div class="song-title">${esc(song.title)}</div>
             <div class="song-artist">${esc(song.artist)}</div>
@@ -479,11 +668,11 @@
           </div>
           <div class="song-actions">
             <button class="action-btn edit-btn" title="Rediger">✏️</button>
-            <button class="action-btn del"      title="Slet">🗑️</button>
+            <button class="action-btn del" title="Slet">🗑️</button>
           </div>
         </div>
         ${tipsHtml}
-        ${toggleHtml}
+        ${lyricsHtml}
       `;
 
       div.querySelector('.edit-btn').addEventListener('click', () => window.openModal(key));
@@ -495,88 +684,14 @@
         const btn   = div.querySelector('.toggle-btn');
         const panel = div.querySelector('.lyrics-panel');
         btn.addEventListener('click', () => {
-          const isOpen = panel.classList.toggle('open');
-          btn.textContent = isOpen ? '📖 Skjul tekst ▴' : '📖 Vis tekst ▾';
+          const open = panel.classList.toggle('open');
+          btn.textContent = open ? '📖 Skjul tekst ▴' : '📖 Vis tekst ▾';
         });
       }
 
       list.appendChild(div);
     });
   };
-
-  window.openModal = (key) => {
-    editingKey = key || null;
-    const song = key && window.songsCache[key];
-    document.getElementById('modal-title').textContent = key ? 'Rediger sang' : 'Tilføj sang';
-    document.getElementById('f-title').value   = song ? song.title   || '' : '';
-    document.getElementById('f-artist').value  = song ? song.artist  || '' : '';
-    document.getElementById('f-status').value  = song ? song.status  || 'want' : 'want';
-    document.getElementById('f-key').value     = song ? song.key     || '' : '';
-    document.getElementById('f-lyrics').value  = song ? song.lyrics  || '' : '';
-    document.getElementById('f-translit').value = song ? song.translit || '' : '';
-    pendingTips = song && Array.isArray(song.tips) ? [...song.tips] : [];
-    renderTipsList();
-    document.getElementById('modal').classList.add('open');
-    setTimeout(() => document.getElementById('f-title').focus(), 60);
-  };
-
-  window.closeModal = () => {
-    document.getElementById('modal').classList.remove('open');
-    editingKey = null; pendingTips = [];
-  };
-
-  window.runAutoTranslit = async () => {
-    const lyrics = document.getElementById('f-lyrics').value.trim();
-    if (!lyrics) { document.getElementById('f-lyrics').focus(); return; }
-    const btn = document.getElementById('auto-btn');
-    btn.classList.add('loading'); btn.disabled = true;
-    try {
-      const lines = lyrics.split('\n');
-      const results = await Promise.all(lines.map(async line => {
-        if (!line.trim()) return '';
-        const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=en&dt=t&dt=rm&q=${encodeURIComponent(line)}`;
-        const res  = await fetch(url);
-        const data = await res.json();
-        return (data[0] || []).map(s => s[3] || '').filter(Boolean).join('') || line;
-      }));
-      document.getElementById('f-translit').value = results.join('\n');
-    } catch (e) {
-      alert('Kunne ikke auto-translittere. Tjek din forbindelse og prøv igen.');
-    } finally {
-      btn.classList.remove('loading'); btn.disabled = false;
-    }
-  };
-
-  window.addTip = () => {
-    const text = document.getElementById('tip-text').value.trim();
-    if (!text) { document.getElementById('tip-text').focus(); return; }
-    pendingTips.push({ section: document.getElementById('tip-section').value, text });
-    document.getElementById('tip-text').value = '';
-    document.getElementById('tip-text').focus();
-    renderTipsList();
-  };
-
-  function renderTipsList() {
-    const c = document.getElementById('tips-list');
-    c.innerHTML = pendingTips.map((t, i) => `
-      <div class="tip-row">
-        <span class="tip-section-lbl ${SECTION_CLASS[t.section] || 'sl-general'}" style="padding:2px 8px;border-radius:6px;font-size:0.75rem;">
-          ${esc(SECTION_LABEL[t.section] || t.section)}
-        </span>
-        <span class="tip-text">${esc(t.text)}</span>
-        <button class="tip-del-btn" onclick="removeTip(${i})">✕</button>
-      </div>`).join('');
-  }
-
-  window.removeTip = (i) => { pendingTips.splice(i, 1); renderTipsList(); };
-
-  document.getElementById('modal').addEventListener('click', e => {
-    if (e.target === document.getElementById('modal')) window.closeModal();
-  });
-  document.addEventListener('keydown', e => { if (e.key === 'Escape') window.closeModal(); });
-  document.getElementById('tip-text').addEventListener('keydown', e => {
-    if (e.key === 'Enter') window.addTip();
-  });
 </script>
 
 <script type="module">
@@ -603,16 +718,13 @@
   });
 
   window.saveItem = () => {
-    const title   = document.getElementById('f-title').value.trim();
-    const artist  = document.getElementById('f-artist').value.trim();
-    const status  = document.getElementById('f-status').value;
-    const key     = document.getElementById('f-key').value.trim();
-    const lyrics  = document.getElementById('f-lyrics').value.trim();
+    const title    = document.getElementById('f-title').value.trim();
+    const artist   = document.getElementById('f-artist').value.trim();
+    const status   = document.getElementById('f-status').value;
+    const key      = document.getElementById('f-key').value.trim();
+    const lyrics   = document.getElementById('f-lyrics').value.trim();
     const translit = document.getElementById('f-translit').value.trim();
-    if (!title || !artist) {
-      document.getElementById(!title ? 'f-title' : 'f-artist').focus();
-      return;
-    }
+    if (!title) { document.getElementById('f-title').focus(); return; }
     const data = { title, artist, status, key, lyrics, translit, tips: pendingTips };
     if (editingKey) {
       update(ref(db, `practice_songs/${editingKey}`), data);
