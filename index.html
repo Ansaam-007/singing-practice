@@ -431,8 +431,11 @@
     </div>
 
     <div class="form-group">
-      <label>YouTube-link (valgfrit)</label>
-      <input type="text" id="f-youtube" placeholder="Indsæt YouTube-link så sangen kan afspilles..." />
+      <label>
+        YouTube
+        <button type="button" onclick="setYtKey()" style="background:#2d1f4a;border:none;border-radius:6px;padding:2px 8px;color:#7c6a9e;font-size:0.75rem;cursor:pointer;font-family:inherit;" title="Indstil YouTube API-nøgle for bedre søgning">⚙️ API-nøgle</button>
+      </label>
+      <input type="text" id="f-youtube" placeholder="Hentes automatisk — eller indsæt YouTube-link manuelt..." />
     </div>
 
     <!-- Lyrics -->
@@ -623,28 +626,56 @@
     return /[؀-ۿݐ-ݿ一-鿿가-힯぀-ヿЀ-ӿऀ-ॿ฀-๿Ͱ-Ͽ]/.test(text);
   }
 
-  /* ── Auto-find YouTube video ID via Invidious public API ── */
+  /* ── Auto-find YouTube video ID ── */
   async function findYoutubeId(title, artist) {
     const q = encodeURIComponent(`${title} ${artist} official`);
-    const instances = [
-      'https://inv.nadeko.net',
-      'https://invidious.nerdvpn.de',
-      'https://yt.drgnz.club',
-      'https://invidious.privacyredirect.com',
-    ];
+
+    // Option 1: YouTube Data API v3 (hurtigst og mest pålidelig — kræver gratis API-nøgle)
+    const ytKey = localStorage.getItem('ytApiKey');
+    if (ytKey) {
+      try {
+        const r = await fetchWithTimeout(
+          `https://www.googleapis.com/youtube/v3/search?part=id&type=video&maxResults=1&q=${q}&key=${ytKey}`, 8000
+        );
+        if (r.ok) {
+          const d = await r.json();
+          const id = d.items?.[0]?.id?.videoId;
+          if (id) return id;
+        }
+      } catch {}
+    }
+
+    // Option 2: Gratis public APIs (ingen nøgle, men kan være ustabile)
     try {
-      return await Promise.any(
-        instances.map(base =>
-          fetchWithTimeout(`${base}/api/v1/search?q=${q}&type=video&fields=videoId&page=1`, 6000)
-            .then(r => { if (!r.ok) throw new Error(); return r.json(); })
-            .then(data => {
-              if (data?.[0]?.videoId) return data[0].videoId;
-              throw new Error();
-            })
-        )
-      );
+      return await Promise.any([
+        fetchWithTimeout(`https://pipedapi.kavin.rocks/search?q=${q}&filter=videos`, 8000)
+          .then(r => r.ok ? r.json() : Promise.reject())
+          .then(d => { const m = d.items?.[0]?.url?.match(/v=([a-zA-Z0-9_-]{11})/); if (m) return m[1]; throw 0; }),
+        fetchWithTimeout(`https://yewtu.be/api/v1/search?q=${q}&type=video`, 8000)
+          .then(r => r.ok ? r.json() : Promise.reject())
+          .then(d => { if (d?.[0]?.videoId) return d[0].videoId; throw 0; }),
+        fetchWithTimeout(`https://inv.nadeko.net/api/v1/search?q=${q}&type=video`, 8000)
+          .then(r => r.ok ? r.json() : Promise.reject())
+          .then(d => { if (d?.[0]?.videoId) return d[0].videoId; throw 0; }),
+      ]);
     } catch { return null; }
   }
+
+  window.setYtKey = () => {
+    const cur = localStorage.getItem('ytApiKey') || '';
+    const key = prompt(
+      'Indtast din gratis YouTube API-nøgle for pålidelig video-søgning.\n\n' +
+      'Sådan får du en (gratis):\n' +
+      '1. Gå til: console.cloud.google.com\n' +
+      '2. Opret projekt → Aktivér "YouTube Data API v3"\n' +
+      '3. Legitimationsoplysninger → Opret API-nøgle\n\n' +
+      'Lad feltet være tomt for at slette nøglen:',
+      cur
+    );
+    if (key === null) return;
+    if (key.trim()) { localStorage.setItem('ytApiKey', key.trim()); alert('✅ API-nøgle gemt!'); }
+    else { localStorage.removeItem('ytApiKey'); alert('Nøgle slettet.'); }
+  };
 
   /* ── Select song from dropdown ── */
   async function selectSong(trackName, artistName, previewUrl) {
