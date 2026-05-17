@@ -664,17 +664,17 @@
   window.setYtKey = () => {
     const cur = localStorage.getItem('ytApiKey') || '';
     const key = prompt(
-      'Indtast din gratis YouTube API-nøgle for pålidelig video-søgning.\n\n' +
-      'Sådan får du en (gratis):\n' +
-      '1. Gå til: console.cloud.google.com\n' +
-      '2. Opret projekt → Aktivér "YouTube Data API v3"\n' +
-      '3. Legitimationsoplysninger → Opret API-nøgle\n\n' +
-      'Lad feltet være tomt for at slette nøglen:',
+      'Enter your free YouTube API key for reliable automatic video search.\n\n' +
+      'How to get one (free):\n' +
+      '1. Go to: console.cloud.google.com\n' +
+      '2. Create a project → Enable "YouTube Data API v3"\n' +
+      '3. Credentials → Create API Key → Copy and paste it here\n\n' +
+      'Leave the field empty to remove the key:',
       cur
     );
     if (key === null) return;
-    if (key.trim()) { localStorage.setItem('ytApiKey', key.trim()); alert('✅ API-nøgle gemt!'); }
-    else { localStorage.removeItem('ytApiKey'); alert('Nøgle slettet.'); }
+    if (key.trim()) { localStorage.setItem('ytApiKey', key.trim()); alert('✅ API key saved!'); }
+    else { localStorage.removeItem('ytApiKey'); alert('Key removed.'); }
   };
 
   /* ── Select song from dropdown ── */
