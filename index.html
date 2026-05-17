@@ -1164,10 +1164,10 @@
     const chunks  = [];
     const recorder = new MediaRecorder(recStream);
     recorder.ondataavailable = e => { if (e.data.size > 0) chunks.push(e.data); };
-    recorder.start(100);
+    recorder.start(); // no timeslice — all data arrives reliably on stop
 
     // Countdown
-    const SECS = 5;
+    const SECS = 6;
     let remaining = SECS;
     document.getElementById('rec-countdown').textContent = remaining;
     document.getElementById('rec-bar').style.width = '100%';
@@ -1178,7 +1178,7 @@
       document.getElementById('rec-bar').style.width = `${(remaining / SECS) * 100}%`;
       if (remaining <= 0) {
         clearInterval(recTimer);
-        recorder.stop();
+        recorder.stop(); // triggers ondataavailable then onstop
       }
     }, 1000);
 
@@ -1186,14 +1186,24 @@
       recStream.getTracks().forEach(t => t.stop());
       recShow('processing');
 
-      const blob = new Blob(chunks, { type: recorder.mimeType || 'audio/webm' });
-      try {
-        const form = new FormData();
-        form.append('audio', blob, 'recording.webm');
-        form.append('return', 'apple_music');
-        form.append('api_token', localStorage.getItem('auddToken') || '');
+      const mimeType = recorder.mimeType || 'audio/webm';
+      const blob = new Blob(chunks, { type: mimeType });
 
-        const res  = await fetchWithTimeout('https://api.audd.io/', 12000, { method: 'POST', body: form });
+      if (blob.size < 1000) {
+        document.getElementById('rec-error-msg').textContent = 'No audio captured — check your microphone is working.';
+        recShow('error');
+        return;
+      }
+
+      try {
+        const ext  = mimeType.includes('ogg') ? 'ogg' : mimeType.includes('mp4') ? 'mp4' : 'webm';
+        const form = new FormData();
+        form.append('audio', blob, `rec.${ext}`);
+        form.append('api_token', localStorage.getItem('auddToken') || '');
+        form.append('return', 'apple_music');
+
+        // Use plain fetch — AbortController can silently drop file uploads
+        const res  = await fetch('https://api.audd.io/', { method: 'POST', body: form });
         const data = await res.json();
 
         if (data.status === 'success' && data.result) {
@@ -1202,14 +1212,13 @@
           document.getElementById('rec-artist').textContent = recResult.artist;
           recShow('result');
         } else if (data.status === 'error') {
-          const msg = data.error?.error_message || 'Unknown error';
-          document.getElementById('rec-error-msg').textContent = msg;
+          document.getElementById('rec-error-msg').textContent = data.error?.error_message || 'Recognition failed';
           recShow('error');
         } else {
           recShow('notfound');
         }
-      } catch(err) {
-        document.getElementById('rec-error-msg').textContent = 'Could not reach recognition service. Check your connection.';
+      } catch {
+        document.getElementById('rec-error-msg').textContent = 'Could not reach AudD. Check your connection.';
         recShow('error');
       }
     };
