@@ -349,6 +349,54 @@
     }
     .fab:hover  { background: #6d28d9; transform: scale(1.08); }
     .fab:active { transform: scale(0.94); }
+    .fab-rec {
+      right: 100px; background: #1a1030;
+      border: 2px solid #3d2b60; font-size: 1.4rem;
+      box-shadow: 0 6px 24px rgba(0,0,0,0.4);
+    }
+    .fab-rec:hover { background: #2d1f4a; border-color: #7c3aed; }
+
+    /* ── Recognition modal ── */
+    .rec-overlay {
+      display: none; position: fixed; inset: 0;
+      background: rgba(0,0,0,0.88); z-index: 500;
+      align-items: center; justify-content: center;
+    }
+    .rec-overlay.open { display: flex; }
+    .rec-modal {
+      background: #1a1030; border: 1px solid #3d2b60; border-radius: 24px;
+      padding: 40px 32px; width: 320px; text-align: center;
+      box-shadow: 0 24px 60px rgba(0,0,0,0.7);
+    }
+    .rec-icon { font-size: 3.2rem; margin-bottom: 12px; }
+    .rec-icon.pulse { animation: recpulse 1s ease-in-out infinite; }
+    @keyframes recpulse { 0%,100% { transform: scale(1); opacity:1; } 50% { transform: scale(1.2); opacity:0.7; } }
+    .rec-countdown {
+      font-size: 3rem; font-weight: 800; color: #c084fc;
+      line-height: 1; margin-bottom: 8px;
+    }
+    .rec-bar-wrap { background: #2d1f4a; border-radius: 10px; height: 6px; margin-bottom: 20px; overflow: hidden; }
+    .rec-bar { height: 100%; background: #7c3aed; border-radius: 10px; transition: width 1s linear; }
+    .rec-label { font-size: 1rem; color: #c4b5d4; margin-bottom: 6px; font-weight: 600; }
+    .rec-sublabel { font-size: 0.82rem; color: #5b4a7a; margin-bottom: 20px; }
+    .rec-found-title  { font-size: 1.2rem; font-weight: 800; color: #e2e8f0; margin: 10px 0 4px; }
+    .rec-found-artist { font-size: 0.9rem; color: #7c6a9e; margin-bottom: 24px; }
+    .rec-btns { display: flex; flex-direction: column; gap: 10px; }
+    .rec-btn-add {
+      background: #7c3aed; border: none; border-radius: 12px; padding: 13px;
+      color: #fff; font-size: 0.95rem; font-weight: 700; cursor: pointer; font-family: inherit;
+    }
+    .rec-btn-add:hover { background: #6d28d9; }
+    .rec-btn-sec {
+      background: #2d1f4a; border: none; border-radius: 12px; padding: 11px;
+      color: #7c6a9e; font-size: 0.9rem; cursor: pointer; font-family: inherit;
+    }
+    .rec-btn-sec:hover { background: #3d2b60; color: #c084fc; }
+    .rec-spinner-ring {
+      width: 56px; height: 56px; border: 4px solid #2d1f4a;
+      border-top-color: #7c3aed; border-radius: 50%;
+      animation: spin 0.8s linear infinite; margin: 0 auto 18px;
+    }
 
     @media (max-width: 480px) {
       body { padding: 18px 12px 90px; }
@@ -484,7 +532,61 @@
 
 <audio id="preview-audio"></audio>
 
+<button class="fab fab-rec" onclick="startRecognition()" title="Identify song by singing">🎤</button>
 <button class="fab" onclick="openModal()">+</button>
+
+<!-- Recognition modal -->
+<div class="rec-overlay" id="rec-overlay">
+  <div class="rec-modal" id="rec-modal-inner">
+
+    <!-- listening -->
+    <div id="rec-s-listening">
+      <div class="rec-icon pulse">🎤</div>
+      <div class="rec-countdown" id="rec-countdown">5</div>
+      <div class="rec-bar-wrap"><div class="rec-bar" id="rec-bar" style="width:100%"></div></div>
+      <div class="rec-label">Listening — sing or hum!</div>
+      <div class="rec-sublabel">Hold your mic close</div>
+      <button class="rec-btn-sec" onclick="cancelRecognition()">Cancel</button>
+    </div>
+
+    <!-- processing -->
+    <div id="rec-s-processing" style="display:none">
+      <div class="rec-spinner-ring"></div>
+      <div class="rec-label">Identifying song...</div>
+    </div>
+
+    <!-- result -->
+    <div id="rec-s-result" style="display:none">
+      <div class="rec-icon">🎵</div>
+      <div class="rec-found-title"  id="rec-title"></div>
+      <div class="rec-found-artist" id="rec-artist"></div>
+      <div class="rec-btns">
+        <button class="rec-btn-add" onclick="addRecognizedSong()">Add this song</button>
+        <button class="rec-btn-sec" onclick="startRecognition()">Try again</button>
+        <button class="rec-btn-sec" onclick="cancelRecognition()">Close</button>
+      </div>
+    </div>
+
+    <!-- not found -->
+    <div id="rec-s-notfound" style="display:none">
+      <div class="rec-icon">😕</div>
+      <div class="rec-label">Song not recognized</div>
+      <div class="rec-sublabel">Try singing more clearly or closer to the mic</div>
+      <div class="rec-btns">
+        <button class="rec-btn-add" onclick="startRecognition()">Try again</button>
+        <button class="rec-btn-sec" onclick="cancelRecognition()">Close</button>
+      </div>
+    </div>
+
+    <!-- error -->
+    <div id="rec-s-error" style="display:none">
+      <div class="rec-icon">⚠️</div>
+      <div class="rec-label" id="rec-error-msg"></div>
+      <button class="rec-btn-sec" onclick="cancelRecognition()">Close</button>
+    </div>
+
+  </div>
+</div>
 
 <!-- Detail modal -->
 <div class="detail-overlay" id="detail-overlay">
@@ -601,10 +703,10 @@
   }
 
   /* ── Fetch lyrics (parallel with timeout) ── */
-  function fetchWithTimeout(url, ms = 6000) {
+  function fetchWithTimeout(url, ms = 6000, opts = {}) {
     const ctrl = new AbortController();
     const id   = setTimeout(() => ctrl.abort(), ms);
-    return fetch(url, { signal: ctrl.signal }).finally(() => clearTimeout(id));
+    return fetch(url, { ...opts, signal: ctrl.signal }).finally(() => clearTimeout(id));
   }
 
   async function fetchLyrics(artist, title) {
@@ -997,6 +1099,98 @@
 
   window.openYT = (title, artist) => {
     window.open('https://www.youtube.com/results?search_query=' + encodeURIComponent((title || '') + ' ' + (artist || '')), '_blank');
+  };
+
+  /* ── Song recognition via mic ── */
+  let recStream = null;
+  let recTimer  = null;
+  let recResult = null;
+
+  function recShow(state) {
+    ['listening','processing','result','notfound','error'].forEach(s => {
+      document.getElementById(`rec-s-${s}`).style.display = s === state ? 'block' : 'none';
+    });
+  }
+
+  window.startRecognition = async () => {
+    recResult = null;
+    document.getElementById('rec-overlay').classList.add('open');
+    recShow('listening');
+
+    // Stop any previous stream
+    if (recStream) { recStream.getTracks().forEach(t => t.stop()); recStream = null; }
+
+    try {
+      recStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    } catch {
+      recShow('error');
+      document.getElementById('rec-error-msg').textContent = 'Microphone access denied. Please allow mic in your browser.';
+      return;
+    }
+
+    const chunks  = [];
+    const recorder = new MediaRecorder(recStream);
+    recorder.ondataavailable = e => { if (e.data.size > 0) chunks.push(e.data); };
+    recorder.start(100);
+
+    // Countdown
+    const SECS = 5;
+    let remaining = SECS;
+    document.getElementById('rec-countdown').textContent = remaining;
+    document.getElementById('rec-bar').style.width = '100%';
+
+    recTimer = setInterval(() => {
+      remaining--;
+      document.getElementById('rec-countdown').textContent = remaining;
+      document.getElementById('rec-bar').style.width = `${(remaining / SECS) * 100}%`;
+      if (remaining <= 0) {
+        clearInterval(recTimer);
+        recorder.stop();
+      }
+    }, 1000);
+
+    recorder.onstop = async () => {
+      recStream.getTracks().forEach(t => t.stop());
+      recShow('processing');
+
+      const blob = new Blob(chunks, { type: recorder.mimeType || 'audio/webm' });
+      try {
+        const form = new FormData();
+        form.append('audio', blob, 'recording.webm');
+        form.append('return', 'apple_music');
+
+        const res  = await fetchWithTimeout('https://api.audd.io/', 10000, { method: 'POST', body: form });
+        const data = await res.json();
+
+        if (data.status === 'success' && data.result) {
+          recResult = { title: data.result.title, artist: data.result.artist };
+          document.getElementById('rec-title').textContent  = recResult.title;
+          document.getElementById('rec-artist').textContent = recResult.artist;
+          recShow('result');
+        } else {
+          recShow('notfound');
+        }
+      } catch {
+        recShow('error');
+        document.getElementById('rec-error-msg').textContent = 'Network error — check your connection and try again.';
+      }
+    };
+  };
+
+  window.cancelRecognition = () => {
+    clearInterval(recTimer);
+    if (recStream) { recStream.getTracks().forEach(t => t.stop()); recStream = null; }
+    document.getElementById('rec-overlay').classList.remove('open');
+  };
+
+  window.addRecognizedSong = () => {
+    if (!recResult) return;
+    window.cancelRecognition();
+    window.openModal();
+    document.getElementById('f-title').value  = recResult.title;
+    document.getElementById('f-artist').value = recResult.artist;
+    // Trigger auto-fetch of lyrics + YouTube
+    selectSong(recResult.title, recResult.artist, '');
   };
 
   /* ── Render song cards ── */
