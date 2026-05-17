@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="da">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Mine Sange</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #0f0a1a;
+      color: #e2e8f0;
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    /* ── Header ── */
+    .header {
+      background: #1a1030;
+      border-bottom: 1px solid #2d1f4a;
+      padding: 14px 20px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      flex-shrink: 0;
+    }
+    .back-btn {
+      background: #2d1f4a;
+      border: none;
+      border-radius: 10px;
+      padding: 8px 14px;
+      color: #c084fc;
+      cursor: pointer;
+      font-family: inherit;
+      font-size: 0.88rem;
+      font-weight: 600;
+      transition: background 0.2s;
+      white-space: nowrap;
+    }
+    .back-btn:hover { background: #3d2b60; }
+    .header-info { flex: 1; min-width: 0; }
+    .header-title  { font-size: 1.1rem; font-weight: 700; color: #e2e8f0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .header-artist { font-size: 0.83rem; color: #7c6a9e; margin-top: 2px; }
+    .header-badges { display: flex; gap: 6px; margin-top: 6px; flex-wrap: wrap; }
+    .badge { font-size: 0.73rem; padding: 3px 10px; border-radius: 20px; font-weight: 600; white-space: nowrap; }
+    .badge.want     { background: #1e3a5f; color: #60a5fa; }
+    .badge.learning { background: #3d2a05; color: #f59e0b; }
+    .badge.mastered { background: #052e16; color: #4ade80; }
+    .badge.key      { background: #2d1f4a; color: #c084fc; }
+
+    /* ── Main split layout ── */
+    .main-layout {
+      display: flex;
+      flex: 1;
+      min-height: 0;
+      overflow: hidden;
+    }
+
+    /* ── Left: lyrics ── */
+    .lyrics-pane {
+      flex: 1;
+      border-right: 1px solid #2d1f4a;
+      overflow-y: auto;
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+    .pane-label {
+      font-size: 0.72rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: #5b4a7a;
+      margin-bottom: 10px;
+    }
+    .lyrics-tabs { display: flex; gap: 8px; }
+    .tab-btn {
+      background: #1a1030;
+      border: 1px solid #2d1f4a;
+      border-radius: 20px;
+      padding: 5px 14px;
+      font-size: 0.8rem;
+      color: #7c6a9e;
+      cursor: pointer;
+      font-family: inherit;
+      transition: all 0.2s;
+    }
+    .tab-btn:hover  { border-color: #7c3aed; color: #c084fc; }
+    .tab-btn.active { background: #7c3aed; border-color: #7c3aed; color: #fff; }
+
+    .lyrics-text {
+      font-size: 0.93rem;
+      line-height: 2;
+      white-space: pre-wrap;
+      word-break: break-word;
+      color: #c4b5d4;
+    }
+    .lyrics-text.translit { color: #a5b4fc; }
+    .no-lyrics { color: #4a3a6a; font-size: 0.9rem; font-style: italic; }
+
+    /* Tips/sections */
+    .tips-block { display: flex; flex-direction: column; gap: 8px; }
+    .section-tip { display: flex; gap: 8px; align-items: flex-start; font-size: 0.83rem; }
+    .section-label { font-weight: 700; white-space: nowrap; flex-shrink: 0; padding: 2px 8px; border-radius: 6px; font-size: 0.75rem; }
+    .sl-verse   { background: #1e3055; color: #93c5fd; }
+    .sl-chorus  { background: #3b0764; color: #d8b4fe; }
+    .sl-bridge  { background: #431407; color: #fb923c; }
+    .sl-high    { background: #3d0505; color: #f87171; }
+    .sl-breath  { background: #052e16; color: #6ee7b7; }
+    .sl-key     { background: #1c1c3d; color: #a5b4fc; }
+    .sl-general { background: #1f2937; color: #94a3b8; }
+    .section-text { color: #c4b5d4; line-height: 1.5; }
+
+    /* ── Right: notes ── */
+    .notes-pane {
+      width: 380px;
+      flex-shrink: 0;
+      overflow-y: auto;
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+    }
+    .notes-textarea {
+      flex: 1;
+      width: 100%;
+      background: #1a1030;
+      border: 1px solid #2d1f4a;
+      border-radius: 14px;
+      padding: 16px;
+      font-size: 0.93rem;
+      color: #e2e8f0;
+      font-family: 'Segoe UI', sans-serif;
+      resize: none;
+      outline: none;
+      line-height: 1.8;
+      min-height: 300px;
+      transition: border-color 0.2s;
+    }
+    .notes-textarea:focus { border-color: #7c3aed; }
+    .notes-textarea::placeholder { color: #4a3a6a; }
+    .notes-textarea:disabled { opacity: 0.4; }
+    .save-status {
+      font-size: 0.78rem;
+      color: #4ade80;
+      margin-top: 8px;
+      text-align: right;
+      min-height: 18px;
+    }
+    .save-status.error { color: #f87171; }
+
+    /* ── Loading ── */
+    .loading-msg { color: #5b4a7a; font-size: 0.9rem; padding: 40px 0; }
+
+    /* ── Mobile: stack vertically ── */
+    @media (max-width: 680px) {
+      body { height: auto; overflow: auto; }
+      .main-layout { flex-direction: column; overflow: visible; }
+      .lyrics-pane { border-right: none; border-bottom: 1px solid #2d1f4a; }
+      .notes-pane  { width: 100%; }
+      .notes-textarea { min-height: 200px; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="header">
+  <button class="back-btn" onclick="history.back()">← Tilbage</button>
+  <div class="header-info">
+    <div class="header-title"  id="h-title">Indlæser...</div>
+    <div class="header-artist" id="h-artist"></div>
+    <div class="header-badges" id="h-badges"></div>
+  </div>
+</div>
+
+<div class="main-layout">
+
+  <!-- Left pane: lyrics + sections -->
+  <div class="lyrics-pane" id="lyrics-pane">
+    <div class="loading-msg" id="loading">Indlæser sang...</div>
+    <div id="lyrics-content" style="display:none">
+
+      <div>
+        <div class="pane-label">Sangtekst</div>
+        <div class="lyrics-tabs" id="lyrics-tabs"></div>
+        <div id="lyrics-display" style="margin-top:14px"></div>
+      </div>
+
+      <div id="tips-block-wrap" style="display:none">
+        <div class="pane-label">Sektioner &amp; Tips</div>
+        <div class="tips-block" id="tips-display"></div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Right pane: notes -->
+  <div class="notes-pane">
+    <div class="pane-label">Dine noter</div>
+    <textarea
+      class="notes-textarea"
+      id="notes-input"
+      placeholder="Skriv dine noter her — hvilke linjer der er svære, vejrtrækningspauser, dynamik, høje toner..."
+      disabled
+    ></textarea>
+    <div class="save-status" id="save-status"></div>
+  </div>
+
+</div>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+  import { getDatabase, ref, onValue, update } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
+  const app = initializeApp({
+    apiKey: "AIzaSyBAdwm30ggf8K0gIgx9CkMvuayy6AiiCa4",
+    authDomain: "breakfast-f7c80.firebaseapp.com",
+    databaseURL: "https://breakfast-f7c80-default-rtdb.europe-west1.firebasedatabase.app",
+    projectId: "breakfast-f7c80",
+    storageBucket: "breakfast-f7c80.firebasestorage.app",
+    messagingSenderId: "803322615237",
+    appId: "1:803322615237:web:5c0345e647fa55a061e7ac"
+  });
+
+  const db = getDatabase(app);
+  const params  = new URLSearchParams(window.location.search);
+  const songKey = params.get('key');
+  if (!songKey) { location.href = 'index.html'; }
+
+  const STATUS_LABEL = { want: '🎵 Vil lære', learning: '🎙️ Øver', mastered: '⭐ Mestret' };
+  const SECTION_LABEL = { verse:'Vers', chorus:'Omkvæd', bridge:'Bro', high:'Høj node', breath:'Åndedræt', key:'Toneart', general:'Generelt' };
+  const SECTION_CLASS = { verse:'sl-verse', chorus:'sl-chorus', bridge:'sl-bridge', high:'sl-high', breath:'sl-breath', key:'sl-key', general:'sl-general' };
+
+  function esc(s) { return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+  function debounce(fn, ms) { let t; return (...a) => { clearTimeout(t); t = setTimeout(() => fn(...a), ms); }; }
+
+  let song = null;
+  let lyricsMode = 'original';
+
+  onValue(ref(db, `practice_songs/${songKey}`), snap => {
+    song = snap.val();
+    if (!song) { location.href = 'index.html'; return; }
+
+    document.title = `${song.title} — Mine Sange`;
+    document.getElementById('h-title').textContent  = song.title  || '';
+    document.getElementById('h-artist').textContent = song.artist || '';
+    document.getElementById('h-badges').innerHTML =
+      `<span class="badge ${song.status}">${STATUS_LABEL[song.status]||''}</span>` +
+      (song.key ? `<span class="badge key">🎼 ${esc(song.key)}</span>` : '');
+
+    document.getElementById('loading').style.display       = 'none';
+    document.getElementById('lyrics-content').style.display = 'block';
+
+    // Tabs
+    const tabsEl = document.getElementById('lyrics-tabs');
+    tabsEl.innerHTML = '';
+    if (song.lyrics) {
+      const b = document.createElement('button');
+      b.className   = 'tab-btn' + (lyricsMode === 'original' ? ' active' : '');
+      b.textContent = 'Original';
+      b.onclick     = () => switchTab('original');
+      tabsEl.appendChild(b);
+    }
+    if (song.translit) {
+      const b = document.createElement('button');
+      b.className   = 'tab-btn' + (lyricsMode === 'translit' ? ' active' : '');
+      b.textContent = 'Translitteration';
+      b.onclick     = () => switchTab('translit');
+      tabsEl.appendChild(b);
+    }
+    renderLyrics();
+
+    // Tips
+    const tips = Array.isArray(song.tips) ? song.tips : [];
+    if (tips.length) {
+      document.getElementById('tips-block-wrap').style.display = 'block';
+      document.getElementById('tips-display').innerHTML = tips.map(t => `
+        <div class="section-tip">
+          <span class="section-label ${SECTION_CLASS[t.section]||'sl-general'}">${esc(SECTION_LABEL[t.section]||t.section)}</span>
+          <span class="section-text">${esc(t.text)}</span>
+        </div>`).join('');
+    }
+
+    // Notes — only set on first load to avoid overwriting while user types
+    const notesEl = document.getElementById('notes-input');
+    if (notesEl.disabled) {
+      notesEl.value    = song.notes || '';
+      notesEl.disabled = false;
+    }
+  });
+
+  function switchTab(mode) {
+    lyricsMode = mode;
+    document.querySelectorAll('.tab-btn').forEach(b => {
+      b.classList.toggle('active',
+        (mode === 'original' && b.textContent === 'Original') ||
+        (mode === 'translit' && b.textContent === 'Translitteration')
+      );
+    });
+    renderLyrics();
+  }
+  window.switchTab = switchTab;
+
+  function renderLyrics() {
+    const el = document.getElementById('lyrics-display');
+    if (!song) return;
+    if (lyricsMode === 'translit' && song.translit) {
+      el.textContent = song.translit;
+      el.className   = 'lyrics-text translit';
+    } else if (song.lyrics) {
+      el.textContent = song.lyrics;
+      el.className   = 'lyrics-text';
+    } else {
+      el.innerHTML   = '<span class="no-lyrics">Ingen sangtekst tilføjet endnu.</span>';
+      el.className   = '';
+    }
+  }
+
+  // Auto-save notes
+  const statusEl = document.getElementById('save-status');
+  let clearTimer;
+
+  const autoSave = debounce(async (value) => {
+    try {
+      await update(ref(db, `practice_songs/${songKey}`), { notes: value });
+      statusEl.textContent = '✓ Gemt';
+      statusEl.className   = 'save-status';
+      clearTimeout(clearTimer);
+      clearTimer = setTimeout(() => { statusEl.textContent = ''; }, 2000);
+    } catch {
+      statusEl.textContent = 'Fejl ved gemning';
+      statusEl.className   = 'save-status error';
+    }
+  }, 900);
+
+  document.getElementById('notes-input').addEventListener('input', e => {
+    statusEl.textContent = '';
+    autoSave(e.target.value);
+  });
+</script>
+
+</body>
+</html>

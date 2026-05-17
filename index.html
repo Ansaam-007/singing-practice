@@ -57,11 +57,89 @@
     .song-card {
       background: #1a1030; border: 1px solid #2d1f4a;
       border-radius: 18px; overflow: hidden; transition: border-color 0.2s;
+      cursor: pointer;
     }
     .song-card:hover { border-color: #5b21b6; }
     .song-top {
       display: flex; align-items: flex-start;
       gap: 14px; padding: 16px 18px 12px;
+    }
+    .song-link {
+      display: flex; align-items: flex-start; gap: 14px;
+      flex: 1; min-width: 0; cursor: pointer;
+    }
+
+    /* ── Detail modal ── */
+    .detail-overlay {
+      display: none; position: fixed; inset: 0;
+      background: rgba(0,0,0,0.85); z-index: 300;
+      align-items: center; justify-content: center; padding: 16px;
+    }
+    .detail-overlay.open { display: flex; }
+    .detail-modal {
+      background: #1a1030; border: 1px solid #3d2b60;
+      border-radius: 22px; width: 100%; max-width: 900px;
+      max-height: 90vh; display: flex; flex-direction: column;
+      overflow: hidden; box-shadow: 0 24px 60px rgba(0,0,0,0.7);
+    }
+    .dm-header {
+      display: flex; align-items: flex-start; gap: 14px;
+      padding: 20px 24px; border-bottom: 1px solid #2d1f4a; flex-shrink: 0;
+    }
+    .dm-info { flex: 1; min-width: 0; }
+    .dm-title  { font-size: 1.2rem; font-weight: 700; color: #e2e8f0; }
+    .dm-artist { font-size: 0.85rem; color: #7c6a9e; margin-top: 3px; }
+    .dm-badges { display: flex; gap: 6px; margin-top: 8px; flex-wrap: wrap; }
+    .dm-close {
+      background: #2d1f4a; border: none; border-radius: 8px;
+      padding: 6px 11px; color: #7c6a9e; cursor: pointer;
+      font-size: 1rem; transition: all 0.15s; flex-shrink: 0;
+    }
+    .dm-close:hover { background: #3d2b60; color: #f87171; }
+    .dm-body {
+      display: flex; flex: 1; min-height: 0; overflow: hidden;
+    }
+    .dm-lyrics-pane {
+      flex: 1; overflow-y: auto; padding: 20px 24px;
+      border-right: 1px solid #2d1f4a; display: flex; flex-direction: column; gap: 18px;
+    }
+    .dm-notes-pane {
+      width: 310px; flex-shrink: 0; padding: 20px 24px;
+      display: flex; flex-direction: column;
+    }
+    .dm-pane-label {
+      font-size: 0.72rem; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 0.06em; color: #5b4a7a; margin-bottom: 10px;
+    }
+    .dm-tabs { display: flex; gap: 8px; margin-bottom: 2px; }
+    .dm-tab {
+      background: #1a1030; border: 1px solid #2d1f4a; border-radius: 20px;
+      padding: 5px 14px; font-size: 0.8rem; color: #7c6a9e;
+      cursor: pointer; font-family: inherit; transition: all 0.2s;
+    }
+    .dm-tab:hover  { border-color: #7c3aed; color: #c084fc; }
+    .dm-tab.active { background: #7c3aed; border-color: #7c3aed; color: #fff; }
+    #dm-lyrics-text {
+      font-size: 0.93rem; line-height: 2; white-space: pre-wrap;
+      word-break: break-word; color: #c4b5d4;
+    }
+    #dm-lyrics-text.translit { color: #a5b4fc; }
+    .dm-no-lyrics { color: #4a3a6a; font-style: italic; font-size: 0.9rem; }
+    #dm-notes {
+      flex: 1; width: 100%; background: #0f0a1a;
+      border: 1px solid #2d1f4a; border-radius: 14px;
+      padding: 14px; font-size: 0.9rem; color: #e2e8f0;
+      font-family: 'Segoe UI', sans-serif; resize: none;
+      outline: none; line-height: 1.8; transition: border-color 0.2s; min-height: 180px;
+    }
+    #dm-notes:focus { border-color: #7c3aed; }
+    #dm-notes::placeholder { color: #4a3a6a; }
+    .dm-save-status { font-size: 0.78rem; color: #4ade80; margin-top: 8px; text-align: right; min-height: 18px; }
+    .dm-save-status.error { color: #f87171; }
+    @media (max-width: 620px) {
+      .dm-body { flex-direction: column; }
+      .dm-lyrics-pane { border-right: none; border-bottom: 1px solid #2d1f4a; max-height: 50vh; }
+      .dm-notes-pane { width: 100%; }
     }
     .song-icon {
       font-size: 1.8rem; width: 46px; height: 46px;
@@ -382,6 +460,38 @@
 
 <button class="fab" onclick="openModal()">+</button>
 
+<!-- Detail modal -->
+<div class="detail-overlay" id="detail-overlay">
+  <div class="detail-modal">
+    <div class="dm-header">
+      <div class="dm-info">
+        <div class="dm-title"  id="dm-title"></div>
+        <div class="dm-artist" id="dm-artist"></div>
+        <div class="dm-badges" id="dm-badges"></div>
+      </div>
+      <button class="dm-close" onclick="window.closeDetailModal()">✕</button>
+    </div>
+    <div class="dm-body">
+      <div class="dm-lyrics-pane">
+        <div>
+          <div class="dm-pane-label">Sangtekst</div>
+          <div class="dm-tabs" id="dm-tabs"></div>
+          <div id="dm-lyrics-text"></div>
+        </div>
+        <div id="dm-tips-wrap" style="display:none">
+          <div class="dm-pane-label">Sektioner &amp; Tips</div>
+          <div class="song-sections" id="dm-tips" style="padding:0"></div>
+        </div>
+      </div>
+      <div class="dm-notes-pane">
+        <div class="dm-pane-label">Dine noter</div>
+        <textarea id="dm-notes" placeholder="Skriv dine noter her — svære linjer, vejrtrækningspauser, dynamik..."></textarea>
+        <div class="dm-save-status" id="dm-save-status"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
 <script>
   let currentFilter = 'all';
   let editingKey    = null;
@@ -599,7 +709,113 @@
   document.getElementById('modal').addEventListener('click', e => {
     if (e.target === document.getElementById('modal')) window.closeModal();
   });
-  document.addEventListener('keydown', e => { if (e.key === 'Escape') window.closeModal(); });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') { window.closeModal(); window.closeDetailModal(); } });
+
+  /* ── Detail modal ── */
+  let dmKey  = null;
+  let dmSong = null;
+  let dmMode = 'original';
+  let dmSaveTimer;
+
+  const dmAutoSave = debounce(async (val) => {
+    if (!dmKey) return;
+    try {
+      await window._saveNotes(dmKey, val);
+      const s = document.getElementById('dm-save-status');
+      s.textContent = '✓ Gemt'; s.className = 'dm-save-status';
+      clearTimeout(dmSaveTimer);
+      dmSaveTimer = setTimeout(() => { s.textContent = ''; }, 2000);
+    } catch {
+      const s = document.getElementById('dm-save-status');
+      s.textContent = 'Fejl ved gemning'; s.className = 'dm-save-status error';
+    }
+  }, 900);
+
+  document.getElementById('dm-notes').addEventListener('input', e => {
+    document.getElementById('dm-save-status').textContent = '';
+    dmAutoSave(e.target.value);
+  });
+
+  document.getElementById('detail-overlay').addEventListener('click', e => {
+    if (e.target === document.getElementById('detail-overlay')) window.closeDetailModal();
+  });
+
+  window.openDetailModal = (key) => {
+    dmKey  = key;
+    dmSong = window.songsCache[key];
+    const song = dmSong;
+
+    document.getElementById('dm-title').textContent  = song.title  || '';
+    document.getElementById('dm-artist').textContent = song.artist || '';
+    document.getElementById('dm-badges').innerHTML =
+      `<span class="badge ${song.status}">${STATUS_LABEL[song.status]}</span>` +
+      (song.key ? `<span class="badge key">🎼 ${esc(song.key)}</span>` : '');
+
+    dmMode = song.lyrics ? 'original' : 'translit';
+    const tabsEl = document.getElementById('dm-tabs');
+    tabsEl.innerHTML = '';
+    if (song.lyrics) {
+      const b = document.createElement('button');
+      b.className   = 'dm-tab' + (dmMode === 'original' ? ' active' : '');
+      b.textContent = 'Original';
+      b.onclick     = () => window.dmSwitch('original');
+      tabsEl.appendChild(b);
+    }
+    if (song.translit) {
+      const b = document.createElement('button');
+      b.className   = 'dm-tab' + (dmMode === 'translit' ? ' active' : '');
+      b.textContent = 'Translitteration';
+      b.onclick     = () => window.dmSwitch('translit');
+      tabsEl.appendChild(b);
+    }
+    dmRenderLyrics();
+
+    const tips = Array.isArray(song.tips) ? song.tips : [];
+    const wrap = document.getElementById('dm-tips-wrap');
+    if (tips.length) {
+      wrap.style.display = 'block';
+      document.getElementById('dm-tips').innerHTML = tips.map(t => `
+        <div class="section-tip">
+          <span class="section-label ${SECTION_CLASS[t.section]||'sl-general'}">${esc(SECTION_LABEL[t.section]||t.section)}</span>
+          <span class="section-text">${esc(t.text)}</span>
+        </div>`).join('');
+    } else {
+      wrap.style.display = 'none';
+    }
+
+    document.getElementById('dm-notes').value = song.notes || '';
+    document.getElementById('dm-save-status').textContent = '';
+    document.getElementById('detail-overlay').classList.add('open');
+  };
+
+  window.closeDetailModal = () => {
+    document.getElementById('detail-overlay').classList.remove('open');
+    dmKey = null; dmSong = null;
+  };
+
+  window.dmSwitch = (mode) => {
+    dmMode = mode;
+    document.querySelectorAll('#dm-tabs .dm-tab').forEach(b => {
+      b.classList.toggle('active',
+        (mode === 'original' && b.textContent === 'Original') ||
+        (mode === 'translit' && b.textContent === 'Translitteration')
+      );
+    });
+    dmRenderLyrics();
+  };
+
+  function dmRenderLyrics() {
+    const el   = document.getElementById('dm-lyrics-text');
+    const song = dmSong;
+    if (!song) return;
+    if (dmMode === 'translit' && song.translit) {
+      el.textContent = song.translit; el.className = 'translit';
+    } else if (song.lyrics) {
+      el.textContent = song.lyrics; el.className = '';
+    } else {
+      el.innerHTML = '<span class="dm-no-lyrics">Ingen sangtekst tilføjet endnu.</span>'; el.className = '';
+    }
+  }
   document.getElementById('tip-text').addEventListener('keydown', e => {
     if (e.key === 'Enter') window.addTip();
   });
@@ -657,13 +873,15 @@
 
       div.innerHTML = `
         <div class="song-top">
-          <div class="song-icon">${STATUS_ICON[song.status]||'🎵'}</div>
-          <div class="song-main">
-            <div class="song-title">${esc(song.title)}</div>
-            <div class="song-artist">${esc(song.artist)}</div>
-            <div class="song-badges">
-              <span class="badge ${song.status}">${STATUS_LABEL[song.status]}</span>
-              ${song.key ? `<span class="badge key">🎼 ${esc(song.key)}</span>` : ''}
+          <div class="song-link">
+            <div class="song-icon">${STATUS_ICON[song.status]||'🎵'}</div>
+            <div class="song-main">
+              <div class="song-title">${esc(song.title)}</div>
+              <div class="song-artist">${esc(song.artist)}</div>
+              <div class="song-badges">
+                <span class="badge ${song.status}">${STATUS_LABEL[song.status]}</span>
+                ${song.key ? `<span class="badge key">🎼 ${esc(song.key)}</span>` : ''}
+              </div>
             </div>
           </div>
           <div class="song-actions">
@@ -675,6 +893,7 @@
         ${lyricsHtml}
       `;
 
+      div.querySelector('.song-link').addEventListener('click', () => window.openDetailModal(key));
       div.querySelector('.edit-btn').addEventListener('click', () => window.openModal(key));
       div.querySelector('.del').addEventListener('click', () => {
         if (confirm(`Slet "${song.title}"?`)) window._removeItem(key);
@@ -735,6 +954,7 @@
   };
 
   window._removeItem = key => remove(ref(db, `practice_songs/${key}`));
+  window._saveNotes  = (key, notes) => update(ref(db, `practice_songs/${key}`), { notes });
 </script>
 
 </body>
