@@ -161,7 +161,18 @@
       padding: 6px 8px; border-radius: 8px; color: #4a3a6a; transition: all 0.15s;
     }
     .action-btn:hover     { background: #2d1f4a; color: #c084fc; }
-    .action-btn.del:hover { color: #f87171; }
+    .action-btn.del:hover  { color: #f87171; }
+    .action-btn.playing   { color: #c084fc; background: #2d1f4a; }
+    .action-btn.yt-btn    { font-size: 0.65rem; font-weight: 800; letter-spacing: 0; }
+    .dm-media-btns { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
+    .dm-media-btn {
+      display: flex; align-items: center; gap: 6px;
+      background: #2d1f4a; border: none; border-radius: 10px;
+      padding: 7px 14px; color: #c084fc; font-size: 0.82rem; font-weight: 600;
+      cursor: pointer; font-family: inherit; transition: background 0.15s;
+    }
+    .dm-media-btn:hover { background: #3d2b60; }
+    .dm-media-btn.playing { background: #3d2b60; color: #e2e8f0; }
 
     /* Section tips */
     .song-sections { padding: 0 18px 10px; display: flex; flex-direction: column; gap: 6px; }
@@ -458,6 +469,8 @@
   </div>
 </div>
 
+<audio id="preview-audio"></audio>
+
 <button class="fab" onclick="openModal()">+</button>
 
 <!-- Detail modal -->
@@ -468,6 +481,7 @@
         <div class="dm-title"  id="dm-title"></div>
         <div class="dm-artist" id="dm-artist"></div>
         <div class="dm-badges" id="dm-badges"></div>
+        <div class="dm-media-btns" id="dm-media"></div>
       </div>
       <button class="dm-close" onclick="window.closeDetailModal()">✕</button>
     </div>
@@ -496,6 +510,7 @@
   let currentFilter = 'all';
   let editingKey    = null;
   let pendingTips   = [];
+  window.pendingPreviewUrl = '';
 
   const STATUS_LABEL = { want: '🎵 Vil lære', learning: '🎙️ Øver', mastered: '⭐ Mestret' };
   const STATUS_ICON  = { want: '🎵', learning: '🎙️', mastered: '⭐' };
@@ -552,7 +567,7 @@
     box.querySelectorAll('.sug-item').forEach((el, i) => {
       el.addEventListener('mousedown', e => {
         e.preventDefault();
-        selectSong(results[i].trackName, results[i].artistName);
+        selectSong(results[i].trackName, results[i].artistName, results[i].previewUrl);
       });
     });
   }
@@ -590,8 +605,9 @@
   }
 
   /* ── Select song from dropdown ── */
-  async function selectSong(trackName, artistName) {
+  async function selectSong(trackName, artistName, previewUrl) {
     hideSuggestions();
+    window.pendingPreviewUrl = previewUrl || '';
     document.getElementById('f-title').value  = trackName;
     document.getElementById('f-artist').value = artistName;
 
@@ -668,6 +684,7 @@
     document.getElementById('f-key').value      = song ? song.key     || '' : '';
     document.getElementById('f-lyrics').value   = song ? song.lyrics  || '' : '';
     document.getElementById('f-translit').value = song ? song.translit|| '' : '';
+    window.pendingPreviewUrl = song ? song.previewUrl || '' : '';
     setStatus('');
     hideSuggestions();
     pendingTips = song && Array.isArray(song.tips) ? [...song.tips] : [];
@@ -679,7 +696,7 @@
   window.closeModal = () => {
     document.getElementById('modal').classList.remove('open');
     hideSuggestions();
-    editingKey = null; pendingTips = [];
+    editingKey = null; pendingTips = []; window.pendingPreviewUrl = '';
     setStatus('');
   };
 
@@ -785,6 +802,22 @@
 
     document.getElementById('dm-notes').value = song.notes || '';
     document.getElementById('dm-save-status').textContent = '';
+
+    const mediaEl = document.getElementById('dm-media');
+    mediaEl.innerHTML = '';
+    if (song.previewUrl) {
+      const pb = document.createElement('button');
+      pb.className = 'dm-media-btn'; pb.id = 'dm-play-btn';
+      pb.textContent = (playingKey === key && !document.getElementById('preview-audio').paused) ? '⏸ Pause' : '▶ Preview';
+      if (playingKey === key && !document.getElementById('preview-audio').paused) pb.classList.add('playing');
+      pb.addEventListener('click', () => window.togglePreview(key, pb));
+      mediaEl.appendChild(pb);
+    }
+    const ytb = document.createElement('button');
+    ytb.className = 'dm-media-btn'; ytb.textContent = '🎬 YouTube';
+    ytb.addEventListener('click', () => window.openYT(song.title, song.artist));
+    mediaEl.appendChild(ytb);
+
     document.getElementById('detail-overlay').classList.add('open');
   };
 
@@ -819,6 +852,51 @@
   document.getElementById('tip-text').addEventListener('keydown', e => {
     if (e.key === 'Enter') window.addTip();
   });
+
+  /* ── Audio preview ── */
+  let playingKey = null;
+
+  window.togglePreview = (key, btn) => {
+    const audio = document.getElementById('preview-audio');
+    const song  = window.songsCache[key];
+    if (!song || !song.previewUrl) return;
+    if (playingKey === key && !audio.paused) {
+      audio.pause();
+      updatePlayBtns(key, false);
+      playingKey = null;
+    } else {
+      document.querySelectorAll('.play-btn').forEach(b => { b.textContent = '▶'; b.classList.remove('playing'); });
+      updateDmPlayBtn(false);
+      if (playingKey !== key) { audio.src = song.previewUrl; playingKey = key; }
+      audio.play().catch(() => {});
+      updatePlayBtns(key, true);
+    }
+  };
+
+  function updatePlayBtns(key, playing) {
+    document.querySelectorAll('.play-btn').forEach(b => { b.textContent = '▶'; b.classList.remove('playing'); });
+    if (playing) {
+      document.querySelectorAll(`[data-play-key="${key}"]`).forEach(b => { b.textContent = '⏸'; b.classList.add('playing'); });
+    }
+    updateDmPlayBtn(playing && dmKey === key);
+  }
+
+  function updateDmPlayBtn(playing) {
+    const b = document.getElementById('dm-play-btn');
+    if (!b) return;
+    b.textContent = playing ? '⏸ Pause' : '▶ Preview';
+    b.classList.toggle('playing', playing);
+  }
+
+  document.getElementById('preview-audio').addEventListener('ended', () => {
+    playingKey = null;
+    document.querySelectorAll('.play-btn').forEach(b => { b.textContent = '▶'; b.classList.remove('playing'); });
+    updateDmPlayBtn(false);
+  });
+
+  window.openYT = (title, artist) => {
+    window.open('https://www.youtube.com/results?search_query=' + encodeURIComponent((title || '') + ' ' + (artist || '')), '_blank');
+  };
 
   /* ── Render song cards ── */
   window.renderAll = () => {
@@ -885,6 +963,8 @@
             </div>
           </div>
           <div class="song-actions">
+            ${song.previewUrl ? `<button class="action-btn play-btn" data-play-key="${key}" title="Afspil 30 sek. preview">▶</button>` : ''}
+            <button class="action-btn yt-btn" title="Søg på YouTube">YT</button>
             <button class="action-btn edit-btn" title="Rediger">✏️</button>
             <button class="action-btn del" title="Slet">🗑️</button>
           </div>
@@ -894,6 +974,10 @@
       `;
 
       div.querySelector('.song-link').addEventListener('click', () => window.openDetailModal(key));
+      if (song.previewUrl) {
+        div.querySelector('.play-btn').addEventListener('click', e => { e.stopPropagation(); window.togglePreview(key, e.currentTarget); });
+      }
+      div.querySelector('.yt-btn').addEventListener('click', e => { e.stopPropagation(); window.openYT(song.title, song.artist); });
       div.querySelector('.edit-btn').addEventListener('click', () => window.openModal(key));
       div.querySelector('.del').addEventListener('click', () => {
         if (confirm(`Slet "${song.title}"?`)) window._removeItem(key);
@@ -944,7 +1028,7 @@
     const lyrics   = document.getElementById('f-lyrics').value.trim();
     const translit = document.getElementById('f-translit').value.trim();
     if (!title) { document.getElementById('f-title').focus(); return; }
-    const data = { title, artist, status, key, lyrics, translit, tips: pendingTips };
+    const data = { title, artist, status, key, lyrics, translit, tips: pendingTips, previewUrl: window.pendingPreviewUrl || '' };
     if (editingKey) {
       update(ref(db, `practice_songs/${editingKey}`), data);
     } else {
