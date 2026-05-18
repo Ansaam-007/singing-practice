@@ -1205,11 +1205,12 @@
         const token = localStorage.getItem('auddToken') || '';
         const ext   = mimeType.includes('ogg') ? 'ogg' : mimeType.includes('mp4') ? 'mp4' : 'webm';
 
-        // Send audio directly to AudD — token + return in URL, only audio in body
+        // Send audio to AudD via FormData with proper File object
         const form = new FormData();
+        form.append('api_token', token);
+        form.append('return', 'apple_music');
         form.append('audio', new File([blob], `recording.${ext}`, { type: mimeType }));
-        const auddUrl = `https://api.audd.io/?api_token=${encodeURIComponent(token)}&return=apple_music`;
-        const auddResp = await fetch(auddUrl, { method: 'POST', body: form });
+        const auddResp = await fetch('https://api.audd.io/', { method: 'POST', body: form });
         const data = await auddResp.json();
 
         if (data.status === 'success' && data.result) {
