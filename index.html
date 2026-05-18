@@ -1205,15 +1205,11 @@
         const token = localStorage.getItem('auddToken') || '';
         const ext   = mimeType.includes('ogg') ? 'ogg' : mimeType.includes('mp4') ? 'mp4' : 'webm';
 
-        // Step 1: upload blob to Firebase Storage to get a temporary public URL
-        const audioUrl = await window._uploadForRecognition(blob, mimeType);
-
-        // Step 2: send the public URL to AudD (same as the curl example)
-        const auddForm = new FormData();
-        auddForm.append('api_token', token);
-        auddForm.append('url', audioUrl);
-        auddForm.append('return', 'apple_music');
-        const auddResp = await fetch('https://api.audd.io/', { method: 'POST', body: auddForm });
+        // Send audio directly to AudD — token + return in URL, only audio in body
+        const form = new FormData();
+        form.append('audio', new File([blob], `recording.${ext}`, { type: mimeType }));
+        const auddUrl = `https://api.audd.io/?api_token=${encodeURIComponent(token)}&return=apple_music`;
+        const auddResp = await fetch(auddUrl, { method: 'POST', body: form });
         const data = await auddResp.json();
 
         if (data.status === 'success' && data.result) {
@@ -1353,7 +1349,6 @@
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
   import { getDatabase, ref, onValue, push, update, remove } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
-  import { getStorage, ref as sRef, uploadBytes, getDownloadURL, deleteObject } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js";
 
   const app = initializeApp({
     apiKey: "AIzaSyBAdwm30ggf8K0gIgx9CkMvuayy6AiiCa4",
@@ -1365,19 +1360,8 @@
     appId: "1:803322615237:web:5c0345e647fa55a061e7ac"
   });
 
-  const db      = getDatabase(app);
-  const storage = getStorage(app);
+  const db = getDatabase(app);
   const songsRef = ref(db, 'practice_songs');
-
-  window._uploadForRecognition = async (blob, mimeType) => {
-    const ext  = mimeType.includes('ogg') ? 'ogg' : mimeType.includes('mp4') ? 'mp4' : 'webm';
-    const path = `audd_temp/${Date.now()}.${ext}`;
-    const r    = sRef(storage, path);
-    await uploadBytes(r, blob, { contentType: mimeType });
-    const url  = await getDownloadURL(r);
-    setTimeout(() => deleteObject(r).catch(() => {}), 120000);
-    return url;
-  };
   window.songsCache = {};
 
   onValue(songsRef, snap => {
