@@ -1282,24 +1282,24 @@
           .then(r => r.json()).catch(() => null),
       ]);
 
-      const previewUrl = itunesData?.results?.[0]?.previewUrl || '';
-
-      if (typeof window._saveNewSong !== 'function') throw new Error('Firebase ikke klar endnu — prøv igen');
-
-      await window._saveNewSong({
-        title, artist,
-        status: 'want',
-        key: '', lyrics: lyrics || '', translit: '',
-        tips: [], notes: '',
-        previewUrl,
-        youtubeId: youtubeId || '',
-      });
+      // Fill form fields and use the proven saveItem() path
+      editingKey = null;
+      pendingTips = [];
+      window.pendingPreviewUrl = itunesData?.results?.[0]?.previewUrl || '';
+      document.getElementById('f-title').value    = title;
+      document.getElementById('f-artist').value   = artist;
+      document.getElementById('f-status').value   = 'want';
+      document.getElementById('f-key').value      = '';
+      document.getElementById('f-lyrics').value   = lyrics || '';
+      document.getElementById('f-translit').value = '';
+      document.getElementById('f-youtube').value  = youtubeId ? `https://youtu.be/${youtubeId}` : '';
 
       window.cancelRecognition();
+      window.saveItem(); // proven save path — same as manual add
     } catch(e) {
       btn.disabled = false;
       btn.textContent = 'Tilføj til min liste';
-      document.getElementById('rec-error-msg').textContent = 'Gem fejlede: ' + e.message;
+      document.getElementById('rec-error-msg').textContent = 'Fejl: ' + e.message;
       recShow('error');
     }
   };
