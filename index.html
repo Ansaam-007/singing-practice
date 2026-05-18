@@ -1205,28 +1205,22 @@
         const token = localStorage.getItem('auddToken') || '';
         const ext   = mimeType.includes('ogg') ? 'ogg' : mimeType.includes('mp4') ? 'mp4' : 'webm';
 
-        // Build multipart body manually — bypasses browser FormData+Blob quirks
-        const boundary = 'AuddBnd' + Date.now();
-        const enc = new TextEncoder();
-        const field = (name, val) =>
-          enc.encode(`--${boundary}\r\nContent-Disposition: form-data; name="${name}"\r\n\r\n${val}\r\n`);
-        const audioHdr = enc.encode(
-          `--${boundary}\r\nContent-Disposition: form-data; name="audio"; filename="recording.${ext}"\r\nContent-Type: ${mimeType}\r\n\r\n`
-        );
-        const audioBytes = new Uint8Array(await blob.arrayBuffer());
-        const closing    = enc.encode(`\r\n--${boundary}--\r\n`);
+        // Step 1: upload blob to file.io to get a temporary public URL
+        const uploadForm = new FormData();
+        uploadForm.append('file', new File([blob], `recording.${ext}`, { type: mimeType }));
+        const uploadResp = await fetch('https://file.io/?expires=1h', { method: 'POST', body: uploadForm });
+        if (!uploadResp.ok) throw new Error(`Upload HTTP ${uploadResp.status}`);
+        const uploadData = await uploadResp.json();
+        if (!uploadData.success || !uploadData.link) throw new Error('Upload failed: ' + (uploadData.message || '?'));
+        const audioUrl = uploadData.link;
 
-        const parts = [field('api_token', token), field('return', 'apple_music'), audioHdr, audioBytes, closing];
-        const body  = new Uint8Array(parts.reduce((s, p) => s + p.byteLength, 0));
-        let off = 0;
-        for (const p of parts) { body.set(p, off); off += p.byteLength; }
-
-        const resp = await fetch('https://api.audd.io/', {
-          method: 'POST',
-          headers: { 'Content-Type': `multipart/form-data; boundary=${boundary}` },
-          body: body,
-        });
-        const data = await resp.json();
+        // Step 2: send the public URL to AudD (same as the curl example)
+        const auddForm = new FormData();
+        auddForm.append('api_token', token);
+        auddForm.append('url', audioUrl);
+        auddForm.append('return', 'apple_music');
+        const auddResp = await fetch('https://api.audd.io/', { method: 'POST', body: auddForm });
+        const data = await auddResp.json();
 
         if (data.status === 'success' && data.result) {
           recResult = { title: data.result.title, artist: data.result.artist };
