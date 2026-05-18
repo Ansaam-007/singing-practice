@@ -1231,16 +1231,26 @@
         });
         const data = await resp.json();
 
-        if (data?.status?.code === 0 && data?.metadata?.music?.[0]) {
-          const track = data.metadata.music[0];
-          recResult = { title: track.title, artist: track.artists?.[0]?.name || '' };
-          document.getElementById('rec-title').textContent  = recResult.title;
-          document.getElementById('rec-artist').textContent = recResult.artist;
-          recShow('result');
+        if (data?.status?.code === 0) {
+          // Try music first, then humming results
+          const track = data?.metadata?.music?.[0] || data?.metadata?.humming?.[0];
+          if (track) {
+            recResult = {
+              title:  track.title  || track.name || '',
+              artist: track.artists?.[0]?.name || track.artist || ''
+            };
+            document.getElementById('rec-title').textContent  = recResult.title;
+            document.getElementById('rec-artist').textContent = recResult.artist;
+            recShow('result');
+          } else {
+            // Code 0 but no track — show full response for debugging
+            document.getElementById('rec-error-msg').textContent = 'Sang ikke fundet. Svar: ' + JSON.stringify(data?.metadata || data).slice(0, 200);
+            recShow('error');
+          }
         } else if (data?.status?.code === 1001) {
           recShow('notfound');
         } else {
-          document.getElementById('rec-error-msg').textContent = data?.status?.msg || JSON.stringify(data).slice(0, 150);
+          document.getElementById('rec-error-msg').textContent = `Kode ${data?.status?.code}: ${data?.status?.msg}`;
           recShow('error');
         }
       } catch(e) {
