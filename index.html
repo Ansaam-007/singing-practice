@@ -581,12 +581,12 @@
     <!-- no token -->
     <div id="rec-s-notoken" style="display:none">
       <div class="rec-icon">🔑</div>
-      <div class="rec-label">Free token needed</div>
-      <div class="rec-sublabel" style="margin-bottom:16px">AudD identifies songs for free — you just need a quick sign-up</div>
+      <div class="rec-label">Free ACRCloud account needed</div>
+      <div class="rec-sublabel" style="margin-bottom:16px">ACRCloud genkender sange gratis (1000/måned) og virker direkte i browseren</div>
       <div class="rec-btns">
-        <button class="rec-btn-add" onclick="window.open('https://dashboard.audd.io/','_blank')">Get free token at audd.io</button>
-        <button class="rec-btn-add" style="background:#2d1f4a" onclick="setAuddToken()">I have a token — enter it</button>
-        <button class="rec-btn-sec" onclick="cancelRecognition()">Close</button>
+        <button class="rec-btn-add" onclick="window.open('https://console.acrcloud.com','_blank')">Opret gratis konto på acrcloud.com</button>
+        <button class="rec-btn-add" style="background:#2d1f4a" onclick="setAcrCredentials()">Jeg har nøgler — indtast dem</button>
+        <button class="rec-btn-sec" onclick="cancelRecognition()">Luk</button>
       </div>
     </div>
 
@@ -595,8 +595,8 @@
       <div class="rec-icon">⚠️</div>
       <div class="rec-label" id="rec-error-msg"></div>
       <div class="rec-btns" style="margin-top:16px">
-        <button class="rec-btn-add" style="background:#2d1f4a" onclick="setAuddToken()">⚙️ Enter AudD token</button>
-        <button class="rec-btn-sec" onclick="cancelRecognition()">Close</button>
+        <button class="rec-btn-add" style="background:#2d1f4a" onclick="setAcrCredentials()">⚙️ Indstil ACRCloud nøgler</button>
+        <button class="rec-btn-sec" onclick="cancelRecognition()">Luk</button>
       </div>
     </div>
 
@@ -1127,15 +1127,15 @@
     });
   }
 
-  window.setAuddToken = () => {
-    const cur = localStorage.getItem('auddToken') || '';
-    const t = prompt('Paste your AudD API token here:\n(Get one free at dashboard.audd.io → sign up → copy your token)', cur);
-    if (t === null) return;
-    if (t.trim()) {
-      localStorage.setItem('auddToken', t.trim());
+  window.setAcrCredentials = () => {
+    const key = prompt('Indtast din ACRCloud Access Key:\n(console.acrcloud.com → dit projekt → Access Key)', localStorage.getItem('acrKey') || '');
+    if (key === null) return;
+    const secret = prompt('Indtast din ACRCloud Access Secret:', localStorage.getItem('acrSecret') || '');
+    if (secret === null) return;
+    if (key.trim() && secret.trim()) {
+      localStorage.setItem('acrKey', key.trim());
+      localStorage.setItem('acrSecret', secret.trim());
       startRecognition();
-    } else {
-      localStorage.removeItem('auddToken');
     }
   };
 
@@ -1143,7 +1143,7 @@
     recResult = null;
     document.getElementById('rec-overlay').classList.add('open');
 
-    if (!localStorage.getItem('auddToken')) {
+    if (!localStorage.getItem('acrKey') || !localStorage.getItem('acrSecret')) {
       recShow('notoken');
       return;
     }
@@ -1202,31 +1202,49 @@
       }
 
       try {
-        const token = localStorage.getItem('auddToken') || '';
-        const ext   = mimeType.includes('ogg') ? 'ogg' : mimeType.includes('mp4') ? 'mp4' : 'webm';
+        const acrKey    = localStorage.getItem('acrKey')    || '';
+        const acrSecret = localStorage.getItem('acrSecret') || '';
+        const ext       = mimeType.includes('ogg') ? 'ogg' : mimeType.includes('mp4') ? 'mp4' : 'webm';
 
-        // Send audio to AudD via CORS proxy (AudD blocks direct browser requests)
+        // HMAC-SHA1 signature for ACRCloud
+        const timestamp = Math.floor(Date.now() / 1000);
+        const msgToSign = `POST\n/v1/identify\n${acrKey}\naudio\n1\n${timestamp}`;
+        const enc       = new TextEncoder();
+        const cryptoKey = await crypto.subtle.importKey(
+          'raw', enc.encode(acrSecret),
+          { name: 'HMAC', hash: 'SHA-1' }, false, ['sign']
+        );
+        const sigBuf    = await crypto.subtle.sign('HMAC', cryptoKey, enc.encode(msgToSign));
+        const signature = btoa(String.fromCharCode(...new Uint8Array(sigBuf)));
+
         const form = new FormData();
-        form.append('api_token', token);
-        form.append('return', 'apple_music');
-        form.append('audio', new File([blob], `recording.${ext}`, { type: mimeType }));
-        const auddResp = await fetch('https://corsproxy.io/?url=https://api.audd.io/', { method: 'POST', body: form });
-        const data = await auddResp.json();
+        form.append('sample',            new File([blob], `rec.${ext}`, { type: mimeType }));
+        form.append('sample_bytes',      String(blob.size));
+        form.append('access_key',        acrKey);
+        form.append('data_type',         'audio');
+        form.append('signature_version', '1');
+        form.append('timestamp',         String(timestamp));
+        form.append('signature',         signature);
 
-        if (data.status === 'success' && data.result) {
-          recResult = { title: data.result.title, artist: data.result.artist };
+        const resp = await fetch('https://identify-eu-west-1.acrcloud.com/v1/identify', {
+          method: 'POST', body: form
+        });
+        const data = await resp.json();
+
+        if (data?.status?.code === 0 && data?.metadata?.music?.[0]) {
+          const track = data.metadata.music[0];
+          recResult = { title: track.title, artist: track.artists?.[0]?.name || '' };
           document.getElementById('rec-title').textContent  = recResult.title;
           document.getElementById('rec-artist').textContent = recResult.artist;
           recShow('result');
-        } else if (data.status === 'error') {
-          document.getElementById('rec-error-msg').textContent =
-            data.error?.error_message || JSON.stringify(data).slice(0, 200);
-          recShow('error');
-        } else {
+        } else if (data?.status?.code === 1001) {
           recShow('notfound');
+        } else {
+          document.getElementById('rec-error-msg').textContent = data?.status?.msg || JSON.stringify(data).slice(0, 150);
+          recShow('error');
         }
       } catch(e) {
-        document.getElementById('rec-error-msg').textContent = e.message || 'Could not reach AudD.';
+        document.getElementById('rec-error-msg').textContent = e.message || 'Kunne ikke nå ACRCloud.';
         recShow('error');
       }
     };
