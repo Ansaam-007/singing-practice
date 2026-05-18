@@ -1161,12 +1161,20 @@
       return;
     }
 
-    const chunks  = [];
-    const recorder = new MediaRecorder(recStream);
-    recorder.ondataavailable = e => { if (e.data.size > 0) chunks.push(e.data); };
-    recorder.start(); // no timeslice — all data arrives reliably on stop
+    const chunks = [];
+    let capturedMime = '';
 
-    // Countdown
+    // Pick a supported MIME type explicitly
+    const preferredMime = ['audio/webm;codecs=opus','audio/webm','audio/ogg;codecs=opus','audio/ogg','audio/mp4']
+      .find(t => MediaRecorder.isTypeSupported(t)) || '';
+    const recorder = new MediaRecorder(recStream, preferredMime ? { mimeType: preferredMime } : {});
+
+    recorder.ondataavailable = e => {
+      if (!capturedMime) capturedMime = recorder.mimeType; // capture before stop clears it
+      if (e.data && e.data.size > 0) chunks.push(e.data);
+    };
+    recorder.start(500); // 500 ms timeslice — data arrives during recording, not just at end
+
     const SECS = 6;
     let remaining = SECS;
     document.getElementById('rec-countdown').textContent = remaining;
@@ -1176,17 +1184,15 @@
       remaining--;
       document.getElementById('rec-countdown').textContent = remaining;
       document.getElementById('rec-bar').style.width = `${(remaining / SECS) * 100}%`;
-      if (remaining <= 0) {
-        clearInterval(recTimer);
-        recorder.stop(); // triggers ondataavailable then onstop
-      }
+      if (remaining <= 0) { clearInterval(recTimer); recorder.stop(); }
     }, 1000);
 
     recorder.onstop = async () => {
       recStream.getTracks().forEach(t => t.stop());
+      await new Promise(r => setTimeout(r, 300)); // let final ondataavailable flush
       recShow('processing');
 
-      const mimeType = recorder.mimeType || 'audio/webm';
+      const mimeType = (capturedMime || preferredMime || 'audio/webm').split(';')[0];
       const blob = new Blob(chunks, { type: mimeType });
 
       if (blob.size < 1000) {
@@ -1196,23 +1202,31 @@
       }
 
       try {
-        const baseMime = mimeType.split(';')[0]; // strip codec params e.g. audio/webm;codecs=opus
-        const ext      = baseMime.includes('ogg') ? 'ogg' : baseMime.includes('mp4') ? 'mp4' : 'webm';
-        const form     = new FormData();
-        form.append('audio', new File([blob], `rec.${ext}`, { type: baseMime }));
-        form.append('api_token', localStorage.getItem('auddToken') || '');
-        form.append('return', 'apple_music');
+        const token = localStorage.getItem('auddToken') || '';
+        const ext   = mimeType.includes('ogg') ? 'ogg' : mimeType.includes('mp4') ? 'mp4' : 'webm';
 
-        // XHR is far more reliable than fetch for multipart file uploads
-        const data = await new Promise((resolve, reject) => {
-          const xhr = new XMLHttpRequest();
-          xhr.open('POST', 'https://api.audd.io/');
-          xhr.timeout = 15000;
-          xhr.onload    = () => { try { resolve(JSON.parse(xhr.responseText)); } catch { reject(new Error('Bad response')); } };
-          xhr.onerror   = () => reject(new Error('Network error'));
-          xhr.ontimeout = () => reject(new Error('Timed out'));
-          xhr.send(form);
+        // Build multipart body manually — bypasses browser FormData+Blob quirks
+        const boundary = 'AuddBnd' + Date.now();
+        const enc = new TextEncoder();
+        const field = (name, val) =>
+          enc.encode(`--${boundary}\r\nContent-Disposition: form-data; name="${name}"\r\n\r\n${val}\r\n`);
+        const audioHdr = enc.encode(
+          `--${boundary}\r\nContent-Disposition: form-data; name="audio"; filename="recording.${ext}"\r\nContent-Type: ${mimeType}\r\n\r\n`
+        );
+        const audioBytes = new Uint8Array(await blob.arrayBuffer());
+        const closing    = enc.encode(`\r\n--${boundary}--\r\n`);
+
+        const parts = [field('api_token', token), field('return', 'apple_music'), audioHdr, audioBytes, closing];
+        const body  = new Uint8Array(parts.reduce((s, p) => s + p.byteLength, 0));
+        let off = 0;
+        for (const p of parts) { body.set(p, off); off += p.byteLength; }
+
+        const resp = await fetch('https://api.audd.io/', {
+          method: 'POST',
+          headers: { 'Content-Type': `multipart/form-data; boundary=${boundary}` },
+          body: body,
         });
+        const data = await resp.json();
 
         if (data.status === 'success' && data.result) {
           recResult = { title: data.result.title, artist: data.result.artist };
@@ -1220,7 +1234,8 @@
           document.getElementById('rec-artist').textContent = recResult.artist;
           recShow('result');
         } else if (data.status === 'error') {
-          document.getElementById('rec-error-msg').textContent = data.error?.error_message || 'Recognition failed';
+          document.getElementById('rec-error-msg').textContent =
+            data.error?.error_message || JSON.stringify(data).slice(0, 200);
           recShow('error');
         } else {
           recShow('notfound');
