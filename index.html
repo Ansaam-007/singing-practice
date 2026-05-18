@@ -561,9 +561,9 @@
       <div class="rec-found-title"  id="rec-title"></div>
       <div class="rec-found-artist" id="rec-artist"></div>
       <div class="rec-btns">
-        <button class="rec-btn-add" onclick="addRecognizedSong()">Add this song</button>
-        <button class="rec-btn-sec" onclick="startRecognition()">Try again</button>
-        <button class="rec-btn-sec" onclick="cancelRecognition()">Close</button>
+        <button class="rec-btn-add" id="rec-add-btn" onclick="addRecognizedSong()">Tilføj til min liste</button>
+        <button class="rec-btn-sec" onclick="startRecognition()">Prøv igen</button>
+        <button class="rec-btn-sec" onclick="cancelRecognition()">Luk</button>
       </div>
     </div>
 
@@ -1256,14 +1256,34 @@
     document.getElementById('rec-overlay').classList.remove('open');
   };
 
-  window.addRecognizedSong = () => {
+  window.addRecognizedSong = async () => {
     if (!recResult) return;
+    const btn = document.getElementById('rec-add-btn');
+    btn.disabled = true;
+    btn.textContent = 'Gemmer...';
+
+    const { title, artist } = recResult;
+
+    // Fetch lyrics, YouTube and iTunes preview in parallel
+    const [lyrics, youtubeId, itunesData] = await Promise.all([
+      fetchLyrics(artist, title).catch(() => null),
+      findYoutubeId(title, artist).catch(() => null),
+      fetch(`https://itunes.apple.com/search?term=${encodeURIComponent(title + ' ' + artist)}&entity=musicTrack&limit=1&media=music`)
+        .then(r => r.json()).catch(() => null),
+    ]);
+
+    const previewUrl = itunesData?.results?.[0]?.previewUrl || '';
+
+    await window._saveNewSong({
+      title, artist,
+      status: 'want',
+      key: '', lyrics: lyrics || '', translit: '',
+      tips: [], notes: '',
+      previewUrl,
+      youtubeId: youtubeId || '',
+    });
+
     window.cancelRecognition();
-    window.openModal();
-    document.getElementById('f-title').value  = recResult.title;
-    document.getElementById('f-artist').value = recResult.artist;
-    // Trigger auto-fetch of lyrics + YouTube
-    selectSong(recResult.title, recResult.artist, '');
   };
 
   /* ── Render song cards ── */
@@ -1406,8 +1426,9 @@
     window.closeModal();
   };
 
-  window._removeItem = key => remove(ref(db, `practice_songs/${key}`));
-  window._saveNotes  = (key, notes) => update(ref(db, `practice_songs/${key}`), { notes });
+  window._removeItem  = key => remove(ref(db, `practice_songs/${key}`));
+  window._saveNotes   = (key, notes) => update(ref(db, `practice_songs/${key}`), { notes });
+  window._saveNewSong = data => push(songsRef, data);
 </script>
 
 </body>
