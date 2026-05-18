@@ -1262,28 +1262,36 @@
     btn.disabled = true;
     btn.textContent = 'Gemmer...';
 
-    const { title, artist } = recResult;
+    try {
+      const { title, artist } = recResult;
 
-    // Fetch lyrics, YouTube and iTunes preview in parallel
-    const [lyrics, youtubeId, itunesData] = await Promise.all([
-      fetchLyrics(artist, title).catch(() => null),
-      findYoutubeId(title, artist).catch(() => null),
-      fetch(`https://itunes.apple.com/search?term=${encodeURIComponent(title + ' ' + artist)}&entity=musicTrack&limit=1&media=music`)
-        .then(r => r.json()).catch(() => null),
-    ]);
+      const [lyrics, youtubeId, itunesData] = await Promise.all([
+        fetchLyrics(artist, title).catch(() => null),
+        findYoutubeId(title, artist).catch(() => null),
+        fetch(`https://itunes.apple.com/search?term=${encodeURIComponent(title + ' ' + artist)}&entity=musicTrack&limit=1&media=music`)
+          .then(r => r.json()).catch(() => null),
+      ]);
 
-    const previewUrl = itunesData?.results?.[0]?.previewUrl || '';
+      const previewUrl = itunesData?.results?.[0]?.previewUrl || '';
 
-    await window._saveNewSong({
-      title, artist,
-      status: 'want',
-      key: '', lyrics: lyrics || '', translit: '',
-      tips: [], notes: '',
-      previewUrl,
-      youtubeId: youtubeId || '',
-    });
+      if (typeof window._saveNewSong !== 'function') throw new Error('Firebase ikke klar endnu — prøv igen');
 
-    window.cancelRecognition();
+      await window._saveNewSong({
+        title, artist,
+        status: 'want',
+        key: '', lyrics: lyrics || '', translit: '',
+        tips: [], notes: '',
+        previewUrl,
+        youtubeId: youtubeId || '',
+      });
+
+      window.cancelRecognition();
+    } catch(e) {
+      btn.disabled = false;
+      btn.textContent = 'Tilføj til min liste';
+      document.getElementById('rec-error-msg').textContent = 'Gem fejlede: ' + e.message;
+      recShow('error');
+    }
   };
 
   /* ── Render song cards ── */
